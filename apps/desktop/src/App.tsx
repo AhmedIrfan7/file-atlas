@@ -1,51 +1,28 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
-
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
+/**
+ * File Atlas: M0 placeholder shell.
+ *
+ * This screen exists only to prove the Tauri + React + Tailwind pipeline works.
+ * It is replaced in M2 by the real Home view.
+ */
+export default function App() {
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <main className="min-h-screen flex items-center justify-center px-6">
+      <div className="max-w-xl w-full text-center">
+        <p className="text-xs uppercase tracking-widest text-[color:var(--color-atlas-muted)] mb-4">
+          File Atlas
+        </p>
+        <h1 className="text-4xl font-semibold leading-tight mb-4">
+          The living map of everything on your computer.
+        </h1>
+        <p className="text-[color:var(--color-atlas-muted)] mb-8">
+          M0 foundation. Nothing scans yet. The engine, the safety pipeline,
+          and the map arrive in later milestones.
+        </p>
+        <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-atlas-border)] px-4 py-2 text-sm text-[color:var(--color-atlas-muted)]">
+          <span className="h-2 w-2 rounded-full bg-[color:var(--color-atlas-accent)]" />
+          Pre-alpha
+        </div>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
     </main>
   );
 }
-
-export default App;

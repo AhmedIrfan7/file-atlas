@@ -7,9 +7,13 @@
 //!
 //! ## Module map (populated across milestones)
 //!
-//! - `schema` DDL and migrations
-//! - `connection` pool and WAL configuration
-//! - `queries` typed read and write helpers
+//! - `connection` open + pragma configuration
+//! - `migrations` embedded SQL migrations applied at startup
 //! - `models` row types shared with `atlas-core`
+//! - `queries` typed read and write helpers
 
 #![doc(html_root_url = "https://docs.rs/atlas-db/0.1.0")]
+
+pub mod connection;
+
+pub use connection::{open, open_in_memory, DbError, Result};

@@ -1,17 +1,14 @@
 [package]
-name = "desktop"
+name = "atlas-desktop"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "File Atlas desktop shell (Tauri v2)"
+authors = ["Ahmed Irfan <ahmedirfancodes@gmail.com>"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+repository = "https://github.com/AhmedIrfan7/file-atlas"
 
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "desktop_lib"
+name = "atlas_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -22,4 +19,3 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-

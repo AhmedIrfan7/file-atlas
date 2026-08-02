@@ -1,7 +1,8 @@
 {
-  "name": "desktop",
+  "name": "atlas-desktop",
   "private": true,
   "version": "0.1.0",
+  "description": "File Atlas desktop application",
   "type": "module",
   "scripts": {
     "dev": "vite",

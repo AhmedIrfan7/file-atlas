@@ -14,7 +14,7 @@ pre-commit:
       stage_fixed: true
     - name: rustfmt
       glob: "*.rs"
-      run: bash -c '. "$HOME/.cargo/env" 2>/dev/null; cargo fmt --all'
+      run: bash -c 'export PATH="$HOME/.cargo/bin:$PATH";cargo fmt --all'
       stage_fixed: true
 
 pre-push:
@@ -27,7 +27,7 @@ pre-push:
     - name: format-check
       run: pnpm format:check
     - name: clippy
-      run: bash -c '. "$HOME/.cargo/env" 2>/dev/null; cargo clippy --workspace --all-targets -- -D warnings'
+      run: bash -c 'export PATH="$HOME/.cargo/bin:$PATH";cargo clippy --workspace --all-targets -- -D warnings'
 
 commit-msg:
   jobs:

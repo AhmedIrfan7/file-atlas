@@ -1,0 +1,53 @@
+# Auto-detect text files and normalize to LF in the repo. Windows checkouts get CRLF.
+* text=auto eol=lf
+
+# Explicit text
+*.rs        text eol=lf diff=rust
+*.toml      text eol=lf
+*.md        text eol=lf
+*.mdx       text eol=lf
+*.json      text eol=lf
+*.jsonc     text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.mjs       text eol=lf
+*.cjs       text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+*.html      text eol=lf
+*.svg       text eol=lf
+*.sh        text eol=lf
+*.py        text eol=lf
+
+# Windows-only scripts stay CRLF
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binary
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.icns      binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.otf       binary
+*.zip       binary
+*.gz        binary
+*.tar       binary
+*.pdf       binary
+*.wasm      binary
+*.mp3       binary
+*.mp4       binary
+*.mov       binary
+
+# Never diff or merge lockfiles
+Cargo.lock  -diff -merge linguist-generated
+pnpm-lock.yaml -diff -merge linguist-generated

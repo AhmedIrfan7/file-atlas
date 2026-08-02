@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+target/
+coverage/
+.pnpm-store/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+apps/desktop/dist/
+pnpm-lock.yaml
+*.min.js
+*.min.css

@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* File Atlas base tokens. Kept small and extended in later milestones. */
+@theme {
+  --color-atlas-bg: #0b0d10;
+  --color-atlas-fg: #e6e8eb;
+  --color-atlas-muted: #8a929c;
+  --color-atlas-accent: #6ea8fe;
+  --color-atlas-border: #1c2026;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-atlas-bg);
+  color: var(--color-atlas-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

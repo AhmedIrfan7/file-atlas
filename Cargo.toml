@@ -63,6 +63,7 @@ pretty_assertions = "1"
 insta = { version = "1", features = ["yaml"] }
 proptest = "1"
 clap = { version = "4", features = ["derive"] }
+dirs = "6"
 
 [profile.release]
 opt-level = 3

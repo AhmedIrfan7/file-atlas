@@ -288,6 +288,7 @@ dependencies = [
  "anyhow",
  "atlas-db",
  "crossbeam-channel",
+ "dirs",
  "ignore",
  "parking_lot",
  "pretty_assertions",

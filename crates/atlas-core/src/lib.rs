@@ -25,6 +25,7 @@
 
 pub mod analytics;
 pub mod classifier;
+pub mod default_roots;
 pub mod file_record;
 pub mod indexer;
 pub mod scanner;
@@ -35,6 +36,7 @@ pub use analytics::{
     StaleBucket,
 };
 pub use classifier::{classify, Category};
+pub use default_roots::{default_roots, SuggestedRoot};
 pub use file_record::FileRecord;
 pub use indexer::{record_volume, root_prefix, run as index_run, IndexError, IndexStats, ScanMeta};
 pub use scanner::{scan, ScanConfig, ScanEvent, ScanReport};

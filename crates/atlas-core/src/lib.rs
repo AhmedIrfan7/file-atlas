@@ -24,5 +24,7 @@
 #![doc(html_root_url = "https://docs.rs/atlas-core/0.1.0")]
 
 pub mod file_record;
+pub mod skip_rules;
 
 pub use file_record::FileRecord;
+pub use skip_rules::SkipRules;

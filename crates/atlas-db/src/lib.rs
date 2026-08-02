@@ -15,5 +15,7 @@
 #![doc(html_root_url = "https://docs.rs/atlas-db/0.1.0")]
 
 pub mod connection;
+pub mod migrations;
 
 pub use connection::{open, open_in_memory, DbError, Result};
+pub use migrations::{apply as apply_migrations, Migration, MigrationError, MIGRATIONS};

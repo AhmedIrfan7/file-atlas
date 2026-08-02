@@ -1,0 +1,35 @@
+# Lefthook config for File Atlas.
+# See https://lefthook.dev/configuration/
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: prettier
+      glob: "*.{md,yml,yaml,json,jsonc,ts,tsx,js,jsx,mjs,cjs,css,html}"
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+    - name: eslint
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs}"
+      run: pnpm exec eslint --fix {staged_files}
+      stage_fixed: true
+    - name: rustfmt
+      glob: "*.rs"
+      run: cargo fmt --all
+      stage_fixed: true
+
+pre-push:
+  parallel: false
+  jobs:
+    - name: typecheck
+      run: pnpm typecheck
+    - name: lint
+      run: pnpm lint
+    - name: format-check
+      run: pnpm format:check
+    - name: clippy
+      run: cargo clippy --workspace --all-targets -- -D warnings
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: pnpm exec commitlint --edit {1}

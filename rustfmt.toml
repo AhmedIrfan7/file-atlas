@@ -5,5 +5,5 @@ newline_style = "Unix"
 use_small_heuristics = "Default"
 reorder_imports = true
 reorder_modules = true
-group_imports = "StdExternalCrate"
-imports_granularity = "Module"
+# `group_imports` and `imports_granularity` are unstable rustfmt features
+# and are intentionally omitted so a stable toolchain suffices.

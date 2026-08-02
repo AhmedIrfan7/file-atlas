@@ -3,9 +3,9 @@
 //! Owns the SQLite index that backs everything File Atlas remembers about a
 //! user's filesystem. Manages schema, migrations, connection lifecycle, and
 //! typed queries. No business logic lives here. Consumers speak in terms of
-//! `FileRecord`, `Volume`, `ActionLogEntry`, and similar domain types.
+//! `FileRow`, `VolumeRow`, `ActionRow`, and similar domain types.
 //!
-//! ## Module map (populated across milestones)
+//! ## Module map
 //!
 //! - `connection` open + pragma configuration
 //! - `migrations` embedded SQL migrations applied at startup
@@ -16,6 +16,9 @@
 
 pub mod connection;
 pub mod migrations;
+pub mod models;
+pub mod queries;
 
 pub use connection::{open, open_in_memory, DbError, Result};
 pub use migrations::{apply as apply_migrations, Migration, MigrationError, MIGRATIONS};
+pub use models::{ActionRow, FileRow, VolumeRow};

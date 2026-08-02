@@ -7,6 +7,7 @@
 //!
 //! ## Module map (populated across milestones)
 //!
+//! - `file_record` the domain type emitted by the scanner
 //! - `scanner` filesystem traversal with skip rules
 //! - `indexer` batched writes into the SQLite index
 //! - `hasher` background BLAKE3 hashing pipeline
@@ -21,3 +22,7 @@
 //! behavior lives in `atlas-platform` behind the `PlatformFs` trait.
 
 #![doc(html_root_url = "https://docs.rs/atlas-core/0.1.0")]
+
+pub mod file_record;
+
+pub use file_record::FileRecord;

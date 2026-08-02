@@ -19,5 +19,15 @@ thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 tracing = { workspace = true }
 parking_lot = { workspace = true }
+walkdir = { workspace = true }
+ignore = { workspace = true }
+time = { workspace = true }
+crossbeam-channel = { workspace = true }
+atlas-db = { path = "../atlas-db" }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+pretty_assertions = { workspace = true }

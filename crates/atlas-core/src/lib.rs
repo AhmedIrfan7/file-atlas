@@ -23,12 +23,17 @@
 
 #![doc(html_root_url = "https://docs.rs/atlas-core/0.1.0")]
 
+pub mod analytics;
 pub mod classifier;
 pub mod file_record;
 pub mod indexer;
 pub mod scanner;
 pub mod skip_rules;
 
+pub use analytics::{
+    home_summary, stale_bucket, top_largest, top_oldest, CategoryTotal, FileSummary, HomeSummary,
+    StaleBucket,
+};
 pub use classifier::{classify, Category};
 pub use file_record::FileRecord;
 pub use indexer::{record_volume, root_prefix, run as index_run, IndexError, IndexStats, ScanMeta};

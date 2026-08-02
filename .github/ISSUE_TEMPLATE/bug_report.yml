@@ -1,0 +1,76 @@
+name: Bug report
+description: Something is not working the way it should.
+title: "[Bug]: "
+labels: ["type:bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. Please fill in every section so we can reproduce quickly.
+
+        If you believe this is a security issue, close this form and email `ahmedirfancodes@gmail.com` instead. See [SECURITY.md](../../SECURITY.md).
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: I am on the latest version or the latest `main`.
+          required: true
+        - label: This is not a security report.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: File Atlas version or commit
+      placeholder: "0.1.0 or a586ac2"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS 14 or newer
+        - macOS 13
+        - Linux (specify distro below)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os_detail
+    attributes:
+      label: OS detail
+      placeholder: "Windows 11 24H2 build 26200, or Ubuntu 24.04, etc."
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened
+      description: What did you observe? What did you expect instead?
+      placeholder: "I clicked X, expected Y, saw Z."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open File Atlas
+        2. Do X
+        3. Observe Y
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant log excerpts. Redact anything sensitive.
+      render: shell
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, related issues, workarounds you found.

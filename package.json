@@ -1,0 +1,24 @@
+{
+  "name": "file-atlas",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The living map of everything on your computer.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedIrfan7/file-atlas.git"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter desktop dev",
+    "build": "pnpm --filter desktop build",
+    "lint": "pnpm -r --parallel lint",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "pnpm -r --parallel test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  }
+}

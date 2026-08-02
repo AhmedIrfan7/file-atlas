@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/AhmedIrfan7/file-atlas/security/policy
+    about: Please report vulnerabilities privately per SECURITY.md, not as a public issue.
+  - name: Question or discussion
+    url: https://github.com/AhmedIrfan7/file-atlas/discussions
+    about: Open a discussion for questions, ideas, or usage help.

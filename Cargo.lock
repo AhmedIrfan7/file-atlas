@@ -325,11 +325,22 @@ dependencies = [
 name = "atlas-desktop"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "atlas-core",
+ "atlas-db",
+ "atlas-platform",
+ "crossbeam-channel",
+ "parking_lot",
+ "rusqlite",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+ "thiserror 2.0.19",
+ "time",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

@@ -88,7 +88,8 @@ pub fn run(
     for event in rx {
         match event {
             ScanEvent::Entry(record) => {
-                buffer.push(record.to_file_row(meta.scan_ts, None));
+                let category = crate::classifier::classify(&record.path, record.is_dir);
+                buffer.push(record.to_file_row(meta.scan_ts, Some(category.as_str().to_string())));
                 if buffer.len() >= BATCH_SIZE {
                     entries_persisted += flush(conn, &buffer)?;
                     buffer.clear();

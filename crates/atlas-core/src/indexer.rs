@@ -73,11 +73,32 @@ pub fn record_volume(conn: &mut rusqlite::Connection, volume: &VolumeRow) -> Res
     Ok(())
 }
 
+/// Live progress forwarded to `run_with_progress`'s callback as entries and
+/// scanner progress ticks arrive. Distinct from `ScanReport`, which is only
+/// available once the scan finishes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct IndexProgress {
+    pub files_seen: u64,
+    pub bytes_seen: u64,
+}
+
 /// Consume every event from `rx`, persist entries, and return statistics.
 pub fn run(
     conn: &mut rusqlite::Connection,
     rx: Receiver<ScanEvent>,
     meta: &ScanMeta,
+) -> Result<IndexStats> {
+    run_with_progress(conn, rx, meta, |_| {})
+}
+
+/// Same contract as `run`, but invokes `on_progress` for every scanner
+/// progress tick so a caller (e.g. the Tauri command layer) can forward live
+/// updates to a UI without polling the database.
+pub fn run_with_progress(
+    conn: &mut rusqlite::Connection,
+    rx: Receiver<ScanEvent>,
+    meta: &ScanMeta,
+    mut on_progress: impl FnMut(IndexProgress),
 ) -> Result<IndexStats> {
     let scan_id = open_scan_row(conn, meta)?;
     let mut entries_persisted: u64 = 0;
@@ -95,8 +116,14 @@ pub fn run(
                     buffer.clear();
                 }
             }
-            ScanEvent::Progress { .. } => {
-                // Progress is informational for the UI; nothing to persist.
+            ScanEvent::Progress {
+                files_seen,
+                bytes_seen,
+            } => {
+                on_progress(IndexProgress {
+                    files_seen,
+                    bytes_seen,
+                });
             }
             ScanEvent::Error { path, message } => {
                 errors += 1;

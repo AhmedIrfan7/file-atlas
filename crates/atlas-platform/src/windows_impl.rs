@@ -82,9 +82,9 @@ fn volume_for_root(mount: &str) -> Result<Volume> {
         GetVolumeInformationW(
             windows::core::PCWSTR(root.as_ptr()),
             Some(&mut label),
-            Some(&mut serial),
-            Some(&mut max_component),
-            Some(&mut flags),
+            Some(&raw mut serial),
+            Some(&raw mut max_component),
+            Some(&raw mut flags),
             Some(&mut fs),
         )
     };
@@ -115,9 +115,9 @@ fn free_bytes_for(mount: &str) -> Option<(Option<u64>, Option<u64>)> {
     let ok = unsafe {
         GetDiskFreeSpaceExW(
             windows::core::PCWSTR(root.as_ptr()),
-            Some(&mut free_caller),
-            Some(&mut total),
-            Some(&mut free_total),
+            Some(&raw mut free_caller),
+            Some(&raw mut total),
+            Some(&raw mut free_total),
         )
     };
     if ok.is_err() {

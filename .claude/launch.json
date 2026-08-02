@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "atlas-web",
+      "runtimeExecutable": "pnpm.cmd",
+      "runtimeArgs": ["--filter", "atlas-desktop", "dev"],
+      "port": 1420,
+      "url": "http://localhost:1420"
+    }
+  ]
+}

@@ -28,7 +28,7 @@ pub struct ScanConfig {
 }
 
 /// Summary of a completed scan.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ScanReport {
     pub files_seen: u64,
     pub bytes_seen: u64,

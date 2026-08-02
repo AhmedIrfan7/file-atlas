@@ -26,6 +26,7 @@ walkdir = { workspace = true }
 ignore = { workspace = true }
 time = { workspace = true }
 crossbeam-channel = { workspace = true }
+rusqlite = { workspace = true }
 atlas-db = { path = "../atlas-db" }
 
 [dev-dependencies]

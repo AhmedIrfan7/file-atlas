@@ -8,8 +8,8 @@
   --color-atlas-accent: #6ea8fe;
   --color-atlas-border: #1c2026;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 

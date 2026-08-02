@@ -15,8 +15,8 @@ export default function App() {
           The living map of everything on your computer.
         </h1>
         <p className="text-[color:var(--color-atlas-muted)] mb-8">
-          M0 foundation. Nothing scans yet. The engine, the safety pipeline,
-          and the map arrive in later milestones.
+          M0 foundation. Nothing scans yet. The engine, the safety pipeline, and the map arrive in
+          later milestones.
         </p>
         <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--color-atlas-border)] px-4 py-2 text-sm text-[color:var(--color-atlas-muted)]">
           <span className="h-2 w-2 rounded-full bg-[color:var(--color-atlas-accent)]" />

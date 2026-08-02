@@ -21,10 +21,7 @@ export default tseslint.config(
   js.configs.recommended,
   {
     files: ["**/*.{ts,tsx}"],
-    extends: [
-      ...tseslint.configs.recommendedTypeChecked,
-      ...tseslint.configs.stylisticTypeChecked,
-    ],
+    extends: [...tseslint.configs.recommendedTypeChecked, ...tseslint.configs.stylisticTypeChecked],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -45,10 +42,7 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

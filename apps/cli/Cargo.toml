@@ -1,0 +1,30 @@
+[package]
+name = "atlas-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "File Atlas engine harness. Scans, indexes, and reports from the terminal."
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "atlas"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+crossbeam-channel = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+rusqlite = { workspace = true }
+time = { workspace = true }
+atlas-core = { path = "../../crates/atlas-core" }
+atlas-db = { path = "../../crates/atlas-db" }
+atlas-platform = { path = "../../crates/atlas-platform" }

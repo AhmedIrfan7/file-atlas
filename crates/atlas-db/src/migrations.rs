@@ -34,11 +34,18 @@ pub struct Migration {
 }
 
 /// The ordered list of migrations to apply. Append-only.
-pub const MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "initial_schema",
-    sql: include_str!("../migrations/0001_initial_schema.sql"),
-}];
+pub const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "initial_schema",
+        sql: include_str!("../migrations/0001_initial_schema.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "files_fts",
+        sql: include_str!("../migrations/0002_fts.sql"),
+    },
+];
 
 /// Apply every pending migration to the given connection. Idempotent.
 pub fn apply(conn: &mut Connection) -> Result<u32> {

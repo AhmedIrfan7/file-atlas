@@ -6,6 +6,7 @@ members = [
     "crates/atlas-platform",
     "crates/atlas-search",
     "crates/atlas-recommender",
+    "apps/desktop/src-tauri",
 ]
 
 [workspace.package]

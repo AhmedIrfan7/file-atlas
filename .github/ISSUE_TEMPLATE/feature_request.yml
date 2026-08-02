@@ -1,0 +1,57 @@
+name: Feature request
+description: Suggest a new capability or a change to existing behavior.
+title: "[Feat]: "
+labels: ["type:feat", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please describe the problem you are trying to solve before the solution. Good problem descriptions unlock better solutions.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched existing issues and discussions.
+          required: true
+        - label: I read the roadmap in `docs/ROADMAP.md`.
+          required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What is not currently possible or is painful? Who is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Concretely, what should the app do? UI sketches or example flows are welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you consider? Why is this the best shape?
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - Small (self-contained, no architectural impact)
+        - Medium (touches one subsystem)
+        - Large (spans multiple subsystems or changes core assumptions)
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and privacy impact
+      description: Does this touch user files? Send anything off-device? Add a new permission surface?
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Links, prior art, screenshots from other tools that do this well or badly.

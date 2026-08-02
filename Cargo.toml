@@ -6,13 +6,14 @@ members = [
     "crates/atlas-platform",
     "crates/atlas-search",
     "crates/atlas-recommender",
+    "apps/cli",
     "apps/desktop/src-tauri",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.80"
+rust-version = "1.82"
 authors = ["Ahmed Irfan <ahmedirfancodes@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/AhmedIrfan7/file-atlas"

@@ -84,6 +84,7 @@ Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapte
 | `trash_selected_paths(paths)`                                                       | Execute step of the safety pipeline below: guardrails, send to OS trash, log, mark removed                     |
 | `restore_trash_action(action_id)` / `list_recent_actions(limit)`                    | Undo affordance: reverse one trash action, or list recent ones for a "recently deleted" panel                  |
 | `get_cleanup_recommendations`                                                       | Every current rule-engine recommendation (see below); execution reuses `trash_selected_paths` above            |
+| `get_storage_map_view(path, category, since_days)`                                  | Folder-size breakdown for one drill-down level (see below)                                                     |
 
 Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) / `scan-finished` during a scan; `hash-progress` (`{ files_hashed, files_total }`) / `hash-finished` (`{ files_hashed, errors }`) during a hash pass.
 
@@ -96,6 +97,12 @@ Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen
 `search_files` sends `query_text` through `atlas_search`'s three pure stages before touching the database: `parser::parse` turns it into a `SearchQuery` (free text plus a `Vec<Filter>`), `planner::plan` turns that into parameterized SQL against `files` (and `files_fts` when there is free text), and `runner::search` executes it. Parser and planner have no I/O and are unit tested without a connection; only `runner`'s tests open a real (in-memory) SQLite database. See ADR 0005 for the filter DSL grammar and why free text uses FTS5 prefix queries rather than a trigram tokenizer.
 
 `AppState` (`apps/desktop/src-tauri/src/state.rs`) holds the one SQLite connection behind a `parking_lot::Mutex`, plus `scan_cancel` and `scan_running` atomics. This is the concrete instance of the single-writer model from ADR 0003: the same connection serves both the indexer's writes during a scan and the analytics reads between scans, so there is never a "database is locked" race. The tradeoff, accepted for now, is that a long scan holds the lock for its duration; read commands issued mid-scan simply wait. A connection pool for concurrent reads during a scan is a candidate improvement once scans against multi-million-file volumes make that wait noticeable.
+
+### Storage map
+
+`get_storage_map_view` calls `atlas_core::storage_map::get_storage_map`, which computes folder sizes on demand rather than from a maintained rollup: given a scope path (or `None` for the root list of completed scan roots), it sums `files.size_bytes` for every live row whose path is the scope itself or starts with `scope\` (an escaped `LIKE` prefix scan against the existing `path` index), once per immediate child plus one synthetic "(files in this folder)" node for loose files. `category` and `since_days` filters narrow the same sum. See ADR 0008 for why this beats a maintained rollup at the scale of one drill-down level, and for the treemap-vs-sunburst and fixed-presets-vs-slider choices on the frontend.
+
+The frontend (`apps/desktop/src/components/StorageMapView.tsx`) holds an explicit breadcrumb stack (`storageMapStore.ts`) rather than parsing path strings for "back" navigation, and lays out each response's nodes with a hand-rolled squarified treemap (`apps/desktop/src/lib/treemap.ts`, unit tested, no charting library dependency).
 
 ## Safety pipeline
 

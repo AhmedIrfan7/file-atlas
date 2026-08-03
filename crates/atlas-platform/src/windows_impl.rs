@@ -14,12 +14,20 @@ use windows::Win32::Storage::FileSystem::{
     GetVolumeInformationW, FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_SYSTEM, INVALID_FILE_ATTRIBUTES,
 };
 
-use crate::trait_defs::{PlatformError, PlatformFs, Result, Volume};
+use crate::trait_defs::{PlatformError, PlatformFs, Result, TrashHandle, Volume};
 
 #[derive(Debug, Default)]
 pub struct WindowsFs;
 
 impl PlatformFs for WindowsFs {
+    fn send_to_trash(&self, path: &Path) -> Result<TrashHandle> {
+        crate::trash_common::send_to_trash(path)
+    }
+
+    fn restore_from_trash(&self, handle: &TrashHandle) -> Result<PathBuf> {
+        crate::trash_common::restore_from_trash(handle)
+    }
+
     fn list_volumes(&self) -> Result<Vec<Volume>> {
         let mask = unsafe { GetLogicalDrives() };
         if mask == 0 {

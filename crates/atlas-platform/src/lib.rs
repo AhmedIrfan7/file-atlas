@@ -13,6 +13,7 @@
 #![doc(html_root_url = "https://docs.rs/atlas-platform/0.1.0")]
 
 pub mod trait_defs;
+pub mod trash_common;
 
 #[cfg(windows)]
 pub mod windows_impl;

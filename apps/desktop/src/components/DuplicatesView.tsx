@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 
 import {
@@ -49,6 +50,16 @@ export default function DuplicatesView() {
       })
       .catch((err: unknown) => setError(String(err)))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const unlisten = listen("hash-finished", () => {
+      refreshGroups();
+    });
+    return () => {
+      void unlisten.then((f) => f());
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

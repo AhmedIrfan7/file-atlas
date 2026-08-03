@@ -30,6 +30,7 @@ pub mod duplicates;
 pub mod file_record;
 pub mod hasher;
 pub mod indexer;
+pub mod safety;
 pub mod scanner;
 pub mod skip_rules;
 
@@ -46,5 +47,6 @@ pub use indexer::{
     record_volume, root_prefix, run as index_run, run_with_progress as index_run_with_progress,
     IndexError, IndexProgress, IndexStats, ScanMeta,
 };
+pub use safety::{check_paths, seed_defaults as seed_protected_paths, GuardrailDecision};
 pub use scanner::{scan, ScanConfig, ScanEvent, ScanReport};
 pub use skip_rules::SkipRules;

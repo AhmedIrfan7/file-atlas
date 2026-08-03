@@ -50,3 +50,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - ADR 0005 (search filter DSL and FTS5 prefix matching, and why a trigram tokenizer was not adopted)
 - 33 unit/integration tests across parser, planner, runner, and saved searches
 - Verified end-to-end against the real indexed data (26,790 files): free-text search ("resume") returned real project files; combined filter (`type:pdf size>1mb`) returned only matching PDFs; save/re-run/delete of a saved search round-tripped correctly; nav bar toggled Home/Search both directions
+
+#### M4. Duplicates
+
+- `atlas-platform`: real `send_to_trash`/`restore_from_trash` via the `trash` crate (Windows Recycle Bin today; macOS/Linux ready for M8), with a manually-run integration test that roundtrips a real file through the real Recycle Bin
+- `atlas-core`: `hasher` (BLAKE3, size-gated candidate selection so only files sharing a size with another file are read from disk), `duplicates` (grouping by hash with a keep-newest suggestion, ordered by wasted space), `safety` (self-healing protected-path guardrails seeded on every startup), `actions` (trash/restore backed by `actions_log`, guardrails enforced before any platform call)
+- `atlas-desktop`: `hash_duplicates`/`cancel_hash` (with `hash-progress`/`hash-finished` events), `get_duplicate_groups`, `trash_selected_paths`, `restore_trash_action`, `list_recent_actions` commands; protected paths seeded in `AppState::new`
+- UI: Duplicates tab with per-group keep-selection (radio, overridable), a two-step delete preview/confirm bar, and a "Recently deleted" panel with per-item restore
+- ADR 0006 (safety pipeline implementation: why the `trash` crate over hand-rolled `IFileOperation`, why protected-path seeding is self-healing rather than respecting arbitrary row deletion, why undo is scoped to trash/restore only for now)
+- 21 new unit/integration tests across the new modules (hasher, duplicates, safety, actions, trash_common), including a real (manually-run, `#[ignore]`d) Windows Recycle Bin roundtrip
+- Verified end-to-end using a dedicated, throwaway scratch folder and a temporarily-swapped isolated database (the real 315 GB / 26,790-file index was backed up untouched beforehand): created two genuine duplicate pairs, ran a real hash pass, confirmed correct grouping and wasted-space totals, overrode the suggested keeper, previewed and confirmed a real delete (verified the files landed in the actual Windows Recycle Bin via `Shell.Application`), restored one from the "Recently deleted" panel (verified it reappeared on disk with byte-identical content), then restored the real database and confirmed the original 315 GB / 26,790 files / 3,912 folders were untouched
+- Fixed a bug found during that verification: the Duplicates view did not refresh its group list when a hash pass finished

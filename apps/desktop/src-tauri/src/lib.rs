@@ -46,6 +46,7 @@ pub fn run() {
             commands::get_top_largest,
             commands::get_top_oldest,
             commands::get_stale_bucket,
+            commands::open_in_file_manager,
             search_commands::search_files,
             search_commands::save_search,
             search_commands::list_saved_searches,

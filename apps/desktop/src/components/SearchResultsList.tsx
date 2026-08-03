@@ -1,3 +1,4 @@
+import { openInFileManager } from "../lib/atlas";
 import { formatBytes, formatRelativeAge } from "../lib/format";
 import type { SearchHit } from "../types";
 
@@ -37,9 +38,18 @@ export default function SearchResultsList({ results, loading, hasQuery }: Props)
             <p className="text-sm truncate">{hit.name}</p>
             <p className="text-xs text-[color:var(--color-atlas-muted)] truncate">{hit.path}</p>
           </div>
-          <div className="shrink-0 text-right text-xs text-[color:var(--color-atlas-muted)] tabular-nums">
-            <p>{hit.is_dir ? "Folder" : formatBytes(hit.size_bytes)}</p>
-            <p>{formatRelativeAge(hit.modified_at)}</p>
+          <div className="shrink-0 flex items-center gap-4">
+            <div className="text-right text-xs text-[color:var(--color-atlas-muted)] tabular-nums">
+              <p>{hit.is_dir ? "Folder" : formatBytes(hit.size_bytes)}</p>
+              <p>{formatRelativeAge(hit.modified_at)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void openInFileManager(hit.path).catch(console.error)}
+              className="text-xs text-[color:var(--color-atlas-accent)] hover:underline"
+            >
+              Show in folder
+            </button>
           </div>
         </li>
       ))}

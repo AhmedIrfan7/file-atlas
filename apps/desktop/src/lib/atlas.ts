@@ -125,3 +125,7 @@ export function getScreenshotBursts(): Promise<Burst[]> {
 export function getProjectBursts(): Promise<Burst[]> {
   return invoke("get_project_bursts");
 }
+
+export function openInFileManager(path: string): Promise<void> {
+  return invoke("open_in_file_manager", { path });
+}

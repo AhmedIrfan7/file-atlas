@@ -13,6 +13,7 @@ use atlas_core::{
     stale_bucket, top_largest, top_oldest, FileSummary, HomeSummary, IndexProgress, ScanConfig,
     ScanMeta, SkipRules, StaleBucket, SuggestedRoot,
 };
+use atlas_platform::PlatformFs;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
 use time::OffsetDateTime;
@@ -194,4 +195,13 @@ pub fn get_stale_bucket(
     let conn = state.db.lock();
     let now = OffsetDateTime::now_utc().unix_timestamp();
     stale_bucket(&conn, now, min_age_days, sample_limit).map_err(|e| e.to_string())
+}
+
+/// Reveal `path` in the OS file manager: Explorer on Windows, Finder on
+/// macOS, the default file manager via `xdg-open` on Linux.
+#[tauri::command]
+pub fn open_in_file_manager(path: String) -> Result<(), String> {
+    atlas_platform::current()
+        .open_in_file_manager(std::path::Path::new(&path))
+        .map_err(|e| e.to_string())
 }

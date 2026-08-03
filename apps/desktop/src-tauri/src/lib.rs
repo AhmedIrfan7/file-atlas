@@ -7,6 +7,7 @@
 #![allow(clippy::needless_pass_by_value)]
 
 mod commands;
+mod search_commands;
 mod state;
 mod volume;
 
@@ -41,6 +42,10 @@ pub fn run() {
             commands::get_top_largest,
             commands::get_top_oldest,
             commands::get_stale_bucket,
+            search_commands::search_files,
+            search_commands::save_search,
+            search_commands::list_saved_searches,
+            search_commands::delete_saved_search,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

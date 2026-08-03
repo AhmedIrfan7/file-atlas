@@ -5,6 +5,7 @@ const TABS: { screen: ScreenState; label: string }[] = [
   { screen: "home", label: "Home" },
   { screen: "search", label: "Search" },
   { screen: "duplicates", label: "Duplicates" },
+  { screen: "cleanup", label: "Cleanup" },
 ];
 
 export default function NavBar() {

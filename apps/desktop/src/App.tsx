@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 
+import CleanupView from "./components/CleanupView";
 import DuplicatesView from "./components/DuplicatesView";
 import HomeView from "./components/HomeView";
 import NavBar from "./components/NavBar";
@@ -82,12 +83,16 @@ export default function App() {
       )}
       {screen === "onboarding" && <OnboardingWizard />}
       {screen === "scanning" && <ScanningView />}
-      {(screen === "home" || screen === "search" || screen === "duplicates") && (
+      {(screen === "home" ||
+        screen === "search" ||
+        screen === "duplicates" ||
+        screen === "cleanup") && (
         <>
           <NavBar />
           {screen === "home" && <HomeView />}
           {screen === "search" && <SearchView />}
           {screen === "duplicates" && <DuplicatesView />}
+          {screen === "cleanup" && <CleanupView />}
         </>
       )}
     </>

@@ -92,6 +92,24 @@ export interface ActionRow {
   undo_ref: string | null;
 }
 
+export type Confidence = "High" | "Medium" | "Low";
+
+export interface RecommendationItem {
+  path: string;
+  name: string;
+  size_bytes: number;
+  modified_at: number | null;
+}
+
+export interface Recommendation {
+  kind: string;
+  title: string;
+  explanation: string;
+  confidence: Confidence;
+  total_bytes: number;
+  items: RecommendationItem[];
+}
+
 export interface HashProgressEvent {
   files_hashed: number;
   files_total: number;

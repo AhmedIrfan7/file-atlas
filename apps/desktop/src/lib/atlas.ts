@@ -11,6 +11,7 @@ import type {
   DuplicateGroup,
   FileSummary,
   HomeSummary,
+  Recommendation,
   RestoreOutcome,
   SavedSearch,
   SearchHit,
@@ -92,4 +93,8 @@ export function restoreTrashAction(actionId: number): Promise<RestoreOutcome> {
 
 export function listRecentActions(limit: number): Promise<ActionRow[]> {
   return invoke("list_recent_actions", { limit });
+}
+
+export function getCleanupRecommendations(): Promise<Recommendation[]> {
+  return invoke("get_cleanup_recommendations");
 }

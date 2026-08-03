@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
-export type ScreenState = "loading" | "onboarding" | "scanning" | "home" | "search" | "duplicates";
+export type ScreenState =
+  "loading" | "onboarding" | "scanning" | "home" | "search" | "duplicates" | "cleanup";
 
 interface ScanProgressState {
   currentRoot: string | null;

@@ -35,6 +35,7 @@ pub mod safety;
 pub mod scanner;
 pub mod skip_rules;
 pub mod storage_map;
+pub mod timeline;
 
 pub use actions::{
     list_recent_trash_actions, restore_action, trash_paths, RestoreOutcome, TrashOutcome,
@@ -56,3 +57,7 @@ pub use safety::{check_paths, seed_defaults as seed_protected_paths, GuardrailDe
 pub use scanner::{scan, ScanConfig, ScanEvent, ScanReport};
 pub use skip_rules::SkipRules;
 pub use storage_map::{get_storage_map, StorageMapFilter, StorageMapResponse, StorageNode};
+pub use timeline::{
+    get_timeline, project_bursts, screenshot_bursts, Burst, Granularity, TimelineBucket,
+    TimelineResponse, BURST_SAMPLE_LIMIT, PROJECT_BURST_MIN_COUNT, SCREENSHOT_BURST_MIN_COUNT,
+};

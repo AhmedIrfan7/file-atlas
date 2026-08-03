@@ -64,10 +64,10 @@ Goal: safely identify duplicate files and let the user reclaim space in one clic
 
 Goal: transparent, explainable recommendations. No black boxes.
 
-- Rule engine
-- Recommendations: forgotten installers, screenshot pileups, stale `node_modules` in unopened projects, empty folders, broken shortcuts, very old cached ZIPs, unused ISOs
+- Rule engine (shipped: empty folders, forgotten installers, old archives, screenshot pileups)
 - Each recommendation shows its reason and its confidence
-- Every recommendation is reviewable and reversible
+- Every recommendation is reviewable; execution reuses M4's trash/undo pipeline unchanged
+- Deferred, not dropped: stale `node_modules`/build caches (needs a dedicated sub-scan that indexes what `SkipRules` currently excludes, plus folder-size aggregation) and broken shortcuts (needs `.lnk` resolution behind `PlatformFs`). See ADR 0007.
 
 ## M6. Storage map
 

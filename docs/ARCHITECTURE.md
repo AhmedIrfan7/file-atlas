@@ -83,8 +83,13 @@ Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapte
 | `get_duplicate_groups(limit)`                                                       | Duplicate groups with a suggested keeper, most wasted space first                                              |
 | `trash_selected_paths(paths)`                                                       | Execute step of the safety pipeline below: guardrails, send to OS trash, log, mark removed                     |
 | `restore_trash_action(action_id)` / `list_recent_actions(limit)`                    | Undo affordance: reverse one trash action, or list recent ones for a "recently deleted" panel                  |
+| `get_cleanup_recommendations`                                                       | Every current rule-engine recommendation (see below); execution reuses `trash_selected_paths` above            |
 
 Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) / `scan-finished` during a scan; `hash-progress` (`{ files_hashed, files_total }`) / `hash-finished` (`{ files_hashed, errors }`) during a hash pass.
+
+### Recommendations
+
+`atlas_recommender::get_recommendations` runs four independent rules against the index (`empty_folders`, `forgotten_installers`, `old_archives`, `screenshot_pileups`) and merges the results. Every rule is a pure SQL read: no filesystem access, no mutation, and a `Recommendation`'s `items` are exactly the paths a caller would hand to `atlas_core::actions::trash_paths`. This means M5 needed no new execute path or safety surface; it produces candidates, M4's pipeline still does the deleting. `Confidence` (`High`/`Medium`/`Low`) is both the trust signal shown in the UI and the default-selection heuristic (`High` pre-checked, everything else left for manual review). See ADR 0007 for which two rules from the original roadmap sketch are deferred and why.
 
 ### Search
 

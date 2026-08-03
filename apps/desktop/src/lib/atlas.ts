@@ -7,12 +7,16 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import type {
+  ActionRow,
+  DuplicateGroup,
   FileSummary,
   HomeSummary,
+  RestoreOutcome,
   SavedSearch,
   SearchHit,
   StaleBucket,
   SuggestedRoot,
+  TrashOutcome,
 } from "../types";
 
 export function getDefaultRoots(): Promise<SuggestedRoot[]> {
@@ -64,4 +68,28 @@ export function listSavedSearches(): Promise<SavedSearch[]> {
 
 export function deleteSavedSearch(id: number): Promise<void> {
   return invoke("delete_saved_search", { id });
+}
+
+export function hashDuplicates(): Promise<void> {
+  return invoke("hash_duplicates");
+}
+
+export function cancelHash(): Promise<void> {
+  return invoke("cancel_hash");
+}
+
+export function getDuplicateGroups(limit: number): Promise<DuplicateGroup[]> {
+  return invoke("get_duplicate_groups", { limit });
+}
+
+export function trashSelectedPaths(paths: string[]): Promise<TrashOutcome[]> {
+  return invoke("trash_selected_paths", { paths });
+}
+
+export function restoreTrashAction(actionId: number): Promise<RestoreOutcome> {
+  return invoke("restore_trash_action", { actionId });
+}
+
+export function listRecentActions(limit: number): Promise<ActionRow[]> {
+  return invoke("list_recent_actions", { limit });
 }

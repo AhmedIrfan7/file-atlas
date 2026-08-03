@@ -54,6 +54,54 @@ export interface SavedSearch {
   created_at: number;
 }
 
+export interface DuplicateMember {
+  file: FileSummary;
+  suggested_keep: boolean;
+}
+
+export interface DuplicateGroup {
+  hash: string;
+  size_bytes: number;
+  wasted_bytes: number;
+  keep_reason: string;
+  members: DuplicateMember[];
+}
+
+export interface TrashOutcome {
+  path: string;
+  ok: boolean;
+  reason: string | null;
+  action_id: number | null;
+}
+
+export interface RestoreOutcome {
+  action_id: number;
+  ok: boolean;
+  reason: string | null;
+  restored_path: string | null;
+}
+
+export interface ActionRow {
+  id: number;
+  ts: number;
+  op: string;
+  path_from: string | null;
+  path_to: string | null;
+  metadata: string | null;
+  reversible: boolean;
+  undo_ref: string | null;
+}
+
+export interface HashProgressEvent {
+  files_hashed: number;
+  files_total: number;
+}
+
+export interface HashFinishedEvent {
+  files_hashed: number;
+  errors: number;
+}
+
 export interface ScanProgressEvent {
   root: string;
   files_seen: number;

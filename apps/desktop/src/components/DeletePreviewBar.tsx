@@ -1,0 +1,77 @@
+import { useState } from "react";
+
+import { formatBytes } from "../lib/format";
+
+interface Props {
+  pathCount: number;
+  bytesToFree: number;
+  paths: string[];
+  onConfirm: () => void;
+  busy: boolean;
+}
+
+export default function DeletePreviewBar({
+  pathCount,
+  bytesToFree,
+  paths,
+  onConfirm,
+  busy,
+}: Props) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (pathCount === 0) return null;
+
+  return (
+    <div className="fixed bottom-0 inset-x-0 border-t border-[color:var(--color-atlas-border)] bg-[color:var(--color-atlas-bg)] px-6 py-4">
+      <div className="max-w-3xl mx-auto">
+        {confirming ? (
+          <div>
+            <p className="text-sm mb-2">
+              Send <span className="font-semibold">{pathCount}</span> files (
+              {formatBytes(bytesToFree)}) to the Recycle Bin?
+            </p>
+            <ul className="max-h-32 overflow-y-auto text-xs text-[color:var(--color-atlas-muted)] mb-3 space-y-0.5">
+              {paths.map((p) => (
+                <li key={p} className="truncate" title={p}>
+                  {p}
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onConfirm}
+                disabled={busy}
+                className="rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] text-sm font-medium px-4 py-2 disabled:opacity-40"
+              >
+                {busy ? "Deleting..." : "Confirm delete"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                disabled={busy}
+                className="rounded-lg border border-[color:var(--color-atlas-border)] text-sm px-4 py-2 text-[color:var(--color-atlas-muted)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <p className="text-sm">
+              <span className="font-semibold">{pathCount}</span> files selected,{" "}
+              {formatBytes(bytesToFree)} to free
+            </p>
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className="rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] text-sm font-medium px-4 py-2"
+            >
+              Review & delete
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -4,6 +4,7 @@ import type { ScreenState } from "../store/scanStore";
 const TABS: { screen: ScreenState; label: string }[] = [
   { screen: "home", label: "Home" },
   { screen: "search", label: "Search" },
+  { screen: "duplicates", label: "Duplicates" },
 ];
 
 export default function NavBar() {

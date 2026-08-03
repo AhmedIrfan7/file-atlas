@@ -1,20 +1,29 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 
+import DuplicatesView from "./components/DuplicatesView";
 import HomeView from "./components/HomeView";
 import NavBar from "./components/NavBar";
 import OnboardingWizard from "./components/OnboardingWizard";
 import ScanningView from "./components/ScanningView";
 import SearchView from "./components/SearchView";
 import { getHomeSummary } from "./lib/atlas";
+import { useDuplicatesStore } from "./store/duplicatesStore";
 import { useScanStore } from "./store/scanStore";
-import type { ScanFinishedEvent, ScanProgressEvent } from "./types";
+import type {
+  HashFinishedEvent,
+  HashProgressEvent,
+  ScanFinishedEvent,
+  ScanProgressEvent,
+} from "./types";
 
 export default function App() {
   const screen = useScanStore((s) => s.screen);
   const setScreen = useScanStore((s) => s.setScreen);
   const setProgress = useScanStore((s) => s.setProgress);
   const lastError = useScanStore((s) => s.lastError);
+  const setHashing = useDuplicatesStore((s) => s.setHashing);
+  const setHashProgress = useDuplicatesStore((s) => s.setHashProgress);
 
   useEffect(() => {
     getHomeSummary()
@@ -41,6 +50,24 @@ export default function App() {
     };
   }, [setProgress, setScreen]);
 
+  useEffect(() => {
+    const unlistenHashProgress = listen<HashProgressEvent>("hash-progress", (event) => {
+      setHashing(true);
+      setHashProgress({
+        filesHashed: event.payload.files_hashed,
+        filesTotal: event.payload.files_total,
+      });
+    });
+    const unlistenHashFinished = listen<HashFinishedEvent>("hash-finished", () => {
+      setHashing(false);
+      setHashProgress(null);
+    });
+    return () => {
+      void unlistenHashProgress.then((f) => f());
+      void unlistenHashFinished.then((f) => f());
+    };
+  }, [setHashing, setHashProgress]);
+
   return (
     <>
       {lastError && (
@@ -55,11 +82,12 @@ export default function App() {
       )}
       {screen === "onboarding" && <OnboardingWizard />}
       {screen === "scanning" && <ScanningView />}
-      {(screen === "home" || screen === "search") && (
+      {(screen === "home" || screen === "search" || screen === "duplicates") && (
         <>
           <NavBar />
           {screen === "home" && <HomeView />}
           {screen === "search" && <SearchView />}
+          {screen === "duplicates" && <DuplicatesView />}
         </>
       )}
     </>

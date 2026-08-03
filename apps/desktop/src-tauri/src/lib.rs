@@ -8,6 +8,7 @@
 
 mod commands;
 mod duplicate_commands;
+mod recommendation_commands;
 mod search_commands;
 mod state;
 mod volume;
@@ -53,6 +54,7 @@ pub fn run() {
             duplicate_commands::trash_selected_paths,
             duplicate_commands::restore_trash_action,
             duplicate_commands::list_recent_actions,
+            recommendation_commands::get_cleanup_recommendations,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

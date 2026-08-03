@@ -343,6 +343,7 @@ dependencies = [
  "atlas-core",
  "atlas-db",
  "atlas-platform",
+ "atlas-recommender",
  "atlas-search",
  "crossbeam-channel",
  "parking_lot",
@@ -378,9 +379,12 @@ name = "atlas-recommender"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "atlas-db",
+ "rusqlite",
  "serde",
  "serde_json",
  "thiserror 2.0.19",
+ "time",
  "tracing",
 ]
 

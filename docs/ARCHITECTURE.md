@@ -77,6 +77,7 @@ Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapte
 | `get_home_summary`                                                                  | Aggregate totals plus the category breakdown                                                                   |
 | `get_top_largest(limit)` / `get_top_oldest(limit)`                                  | Top-N file lists for the home view                                                                             |
 | `get_stale_bucket(min_age_days, sample_limit)`                                      | Files not modified in at least `min_age_days`, with a sample                                                   |
+| `open_in_file_manager(path)`                                                        | Reveal `path` in Explorer / Finder / the default Linux file manager                                            |
 | `search_files(query_text, limit)`                                                   | Parse `query_text` through `atlas_search::parser` and run it (see below)                                       |
 | `save_search(name, query_text)` / `list_saved_searches` / `delete_saved_search(id)` | Saved-search CRUD, `apps/desktop/src-tauri/src/search_commands.rs`                                             |
 | `hash_duplicates` / `cancel_hash`                                                   | Kick off / cancel a size-gated BLAKE3 hashing pass (`apps/desktop/src-tauri/src/duplicate_commands.rs`)        |
@@ -122,10 +123,10 @@ request -> guardrails -> preview -> confirm -> execute -> action_log -> undo aff
 
 Implemented for trash/restore as of M4 (see ADR 0006 for why each piece looks the way it does):
 
-- **guardrails**: `atlas_core::safety::check_paths` rejects any path under a `protected_paths` prefix (`C:\Windows`, `C:\Program Files`, `C:\ProgramData`, etc.), seeded self-healingly on every startup by `atlas_core::safety::seed_defaults` so a missing row never quietly means "unprotected."
+- **guardrails**: `atlas_core::safety::check_paths` rejects any path under a `protected_paths` prefix, seeded self-healingly on every startup by `atlas_core::safety::seed_defaults` so a missing row never quietly means "unprotected." The prefix list is per-OS as of M8 (`C:\Windows`, `C:\Program Files`, etc. on Windows; `/System`, `/Applications`, etc. on macOS; `/usr`, `/opt`, etc. on Linux), plus a runtime-resolved per-user trash folder on macOS/Linux. See ADR 0010 for why this had to change: the prefix list was previously Windows-only and silently protected nothing at all on macOS or Linux.
 - **preview**: built client-side in `DuplicatesView`/`DeletePreviewBar` from the file list and total bytes before any command is called.
 - **confirm**: an explicit second click in `DeletePreviewBar` (the button only sends the trash command after the user clicks "Confirm delete" on the preview).
-- **execute**: `atlas_core::actions::trash_paths` calls `PlatformFs::send_to_trash`, implemented via the `trash` crate (`atlas_platform::trash_common`), which wraps the real Windows Recycle Bin / macOS Trash / Linux freedesktop trash.
+- **execute**: `atlas_core::actions::trash_paths` calls `PlatformFs::send_to_trash`, implemented via the `trash` crate (`atlas_platform::trash_common`), which wraps the real Windows Recycle Bin / macOS Trash / Linux freedesktop trash. Restore (the next bullet) works on Windows and Linux; on macOS it reports `Unsupported` since the crate exposes no way to find a trashed item again by identity there. See ADR 0010.
 - **action_log**: every successful trash writes one `actions_log` row (`op = 'trash'`) with enough metadata (parent, name, deletion timestamp, JSON-encoded in `metadata`) to find the item again in the OS trash listing later, and sets `files.removed_at`.
 - **undo affordance**: `atlas_core::actions::restore_action` reverses exactly one trash action by id; the UI's "Recently deleted" panel lists recent ones with a Restore button per item. Undo is intentionally scoped to trash/restore only, not a general action-reversal framework, until a second action type exists to validate that shape against.
 
@@ -145,6 +146,8 @@ pub trait PlatformFs {
 ```
 
 Core code never uses `#[cfg(target_os)]`. Implementations live in `atlas-platform` and are selected at startup.
+
+As of M8, all three target platforms have real implementations (`windows_impl`, `macos_impl`, `linux_impl`); `stub_impl` remains only as a compile fallback for any other OS. `list_volumes` is real device enumeration on each OS (`GetLogicalDrives`/`GetVolumeInformationW` on Windows, `/Volumes` plus `libc::statfs` on macOS, `/proc/mounts` plus `libc::statvfs` on Linux). `is_hidden` and `is_system` follow each OS's real convention rather than a shared one: Unix has no per-file "system" attribute the way NTFS does, so `is_system` there is prefix-based instead. `open_in_file_manager` (Explorer `/select,` / Finder `open -R` / `xdg-open`) went from zero implementations and zero callers on any platform to a real "Show in folder" action wired into search results. See ADR 0010 for the per-platform reasoning, and for why `restore_from_trash` is the one method that is not full parity yet (`Unsupported` on macOS; see the safety pipeline section above).
 
 ## Storage
 

@@ -34,3 +34,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `atlas-cli`: `atlas` binary with `scan`, `stats`, `volumes`, and `search` commands; verified end-to-end scanning of the repo itself
 - ADR 0003 (SQLite index with single-writer model), ADR 0004 (skip rules vs protected paths)
 - 18 unit tests: connection open/migrate roundtrips, upsert idempotency, rescan removal sweep, scanner coverage, node_modules skip, cancellation, progress emission, Windows volume enumeration, indexer full-scan and rescan
+
+#### M2. Home view
+
+- `atlas-core`: extension-based `classifier` wired into the indexer so every row gets a `Category`; `analytics` module (`home_summary`, `top_largest`, `top_oldest`, `stale_bucket`); `default_roots` using the `dirs` crate for onboarding suggestions; `run_with_progress` callback hook on the indexer for live progress without polling
+- `atlas-desktop`: `AppState` holding one mutex-guarded SQLite connection (ADR 0003's single-writer model in practice); Tauri commands `get_default_roots`, `start_scan`, `cancel_scan`, `is_scanning`, `get_home_summary`, `get_top_largest`, `get_top_oldest`, `get_stale_bucket`; `scan-progress` and `scan-finished` events; `tauri-plugin-dialog` for custom folder picking
+- UI: onboarding wizard (suggested + custom roots), scanning view with live progress and cancel, home view (category breakdown with bars, largest/oldest file lists, "not touched in a year" bucket), Zustand store for screen/progress state, typed `invoke()` wrappers
+- Verified end-to-end against the real Tauri app on the maintainer's own machine: 315 GB across 26,790 files and 3,912 folders scanned from Desktop/Downloads/Documents/Pictures/Videos/Music, correctly categorized, with working stale-file and top-N views

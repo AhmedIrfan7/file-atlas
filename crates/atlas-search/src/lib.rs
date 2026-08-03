@@ -13,3 +13,7 @@
 //! - `saved` persistence for user-saved searches
 
 #![doc(html_root_url = "https://docs.rs/atlas-search/0.1.0")]
+
+pub mod parser;
+
+pub use parser::{parse, Cmp, Filter, ParseError, SearchQuery};

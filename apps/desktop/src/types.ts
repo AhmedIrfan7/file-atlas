@@ -110,6 +110,19 @@ export interface Recommendation {
   items: RecommendationItem[];
 }
 
+export interface StorageNode {
+  path: string;
+  name: string;
+  is_dir: boolean;
+  size_bytes: number;
+}
+
+export interface StorageMapResponse {
+  scope_path: string | null;
+  total_bytes: number;
+  nodes: StorageNode[];
+}
+
 export interface HashProgressEvent {
   files_hashed: number;
   files_total: number;

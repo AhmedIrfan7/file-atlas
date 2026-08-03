@@ -8,6 +8,7 @@ import NavBar from "./components/NavBar";
 import OnboardingWizard from "./components/OnboardingWizard";
 import ScanningView from "./components/ScanningView";
 import SearchView from "./components/SearchView";
+import StorageMapView from "./components/StorageMapView";
 import { getHomeSummary } from "./lib/atlas";
 import { useDuplicatesStore } from "./store/duplicatesStore";
 import { useScanStore } from "./store/scanStore";
@@ -86,13 +87,15 @@ export default function App() {
       {(screen === "home" ||
         screen === "search" ||
         screen === "duplicates" ||
-        screen === "cleanup") && (
+        screen === "cleanup" ||
+        screen === "storage") && (
         <>
           <NavBar />
           {screen === "home" && <HomeView />}
           {screen === "search" && <SearchView />}
           {screen === "duplicates" && <DuplicatesView />}
           {screen === "cleanup" && <CleanupView />}
+          {screen === "storage" && <StorageMapView />}
         </>
       )}
     </>

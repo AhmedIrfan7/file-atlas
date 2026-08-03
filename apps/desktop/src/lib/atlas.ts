@@ -16,6 +16,7 @@ import type {
   SavedSearch,
   SearchHit,
   StaleBucket,
+  StorageMapResponse,
   SuggestedRoot,
   TrashOutcome,
 } from "../types";
@@ -97,4 +98,12 @@ export function listRecentActions(limit: number): Promise<ActionRow[]> {
 
 export function getCleanupRecommendations(): Promise<Recommendation[]> {
   return invoke("get_cleanup_recommendations");
+}
+
+export function getStorageMapView(
+  path: string | null,
+  category: string | null,
+  sinceDays: number | null,
+): Promise<StorageMapResponse> {
+  return invoke("get_storage_map_view", { path, category, sinceDays });
 }

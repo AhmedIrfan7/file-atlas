@@ -34,6 +34,7 @@ pub mod indexer;
 pub mod safety;
 pub mod scanner;
 pub mod skip_rules;
+pub mod storage_map;
 
 pub use actions::{
     list_recent_trash_actions, restore_action, trash_paths, RestoreOutcome, TrashOutcome,
@@ -54,3 +55,4 @@ pub use indexer::{
 pub use safety::{check_paths, seed_defaults as seed_protected_paths, GuardrailDecision};
 pub use scanner::{scan, ScanConfig, ScanEvent, ScanReport};
 pub use skip_rules::SkipRules;
+pub use storage_map::{get_storage_map, StorageMapFilter, StorageMapResponse, StorageNode};

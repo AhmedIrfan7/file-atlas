@@ -11,6 +11,7 @@ mod duplicate_commands;
 mod recommendation_commands;
 mod search_commands;
 mod state;
+mod storage_commands;
 mod volume;
 
 use tauri::Manager;
@@ -55,6 +56,7 @@ pub fn run() {
             duplicate_commands::restore_trash_action,
             duplicate_commands::list_recent_actions,
             recommendation_commands::get_cleanup_recommendations,
+            storage_commands::get_storage_map_view,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

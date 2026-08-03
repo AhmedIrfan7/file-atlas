@@ -6,7 +6,14 @@
 
 import { invoke } from "@tauri-apps/api/core";
 
-import type { FileSummary, HomeSummary, StaleBucket, SuggestedRoot } from "../types";
+import type {
+  FileSummary,
+  HomeSummary,
+  SavedSearch,
+  SearchHit,
+  StaleBucket,
+  SuggestedRoot,
+} from "../types";
 
 export function getDefaultRoots(): Promise<SuggestedRoot[]> {
   return invoke("get_default_roots");
@@ -41,4 +48,20 @@ export function getStaleBucket(minAgeDays: number, sampleLimit: number): Promise
     minAgeDays,
     sampleLimit,
   });
+}
+
+export function searchFiles(queryText: string, limit: number): Promise<SearchHit[]> {
+  return invoke("search_files", { queryText, limit });
+}
+
+export function saveSearch(name: string, queryText: string): Promise<number> {
+  return invoke("save_search", { name, queryText });
+}
+
+export function listSavedSearches(): Promise<SavedSearch[]> {
+  return invoke("list_saved_searches");
+}
+
+export function deleteSavedSearch(id: number): Promise<void> {
+  return invoke("delete_saved_search", { id });
 }

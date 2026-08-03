@@ -329,6 +329,7 @@ dependencies = [
  "atlas-core",
  "atlas-db",
  "atlas-platform",
+ "atlas-search",
  "crossbeam-channel",
  "parking_lot",
  "rusqlite",

@@ -38,6 +38,22 @@ export interface StaleBucket {
   sample: FileSummary[];
 }
 
+export interface SearchHit {
+  path: string;
+  name: string;
+  size_bytes: number;
+  modified_at: number | null;
+  category: string | null;
+  is_dir: boolean;
+}
+
+export interface SavedSearch {
+  id: number;
+  name: string;
+  query_text: string;
+  created_at: number;
+}
+
 export interface ScanProgressEvent {
   root: string;
   files_seen: number;

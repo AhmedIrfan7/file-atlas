@@ -2,8 +2,10 @@ import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 
 import HomeView from "./components/HomeView";
+import NavBar from "./components/NavBar";
 import OnboardingWizard from "./components/OnboardingWizard";
 import ScanningView from "./components/ScanningView";
+import SearchView from "./components/SearchView";
 import { getHomeSummary } from "./lib/atlas";
 import { useScanStore } from "./store/scanStore";
 import type { ScanFinishedEvent, ScanProgressEvent } from "./types";
@@ -53,7 +55,13 @@ export default function App() {
       )}
       {screen === "onboarding" && <OnboardingWizard />}
       {screen === "scanning" && <ScanningView />}
-      {screen === "home" && <HomeView />}
+      {(screen === "home" || screen === "search") && (
+        <>
+          <NavBar />
+          {screen === "home" && <HomeView />}
+          {screen === "search" && <SearchView />}
+        </>
+      )}
     </>
   );
 }

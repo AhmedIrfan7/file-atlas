@@ -41,3 +41,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `atlas-desktop`: `AppState` holding one mutex-guarded SQLite connection (ADR 0003's single-writer model in practice); Tauri commands `get_default_roots`, `start_scan`, `cancel_scan`, `is_scanning`, `get_home_summary`, `get_top_largest`, `get_top_oldest`, `get_stale_bucket`; `scan-progress` and `scan-finished` events; `tauri-plugin-dialog` for custom folder picking
 - UI: onboarding wizard (suggested + custom roots), scanning view with live progress and cancel, home view (category breakdown with bars, largest/oldest file lists, "not touched in a year" bucket), Zustand store for screen/progress state, typed `invoke()` wrappers
 - Verified end-to-end against the real Tauri app on the maintainer's own machine: 315 GB across 26,790 files and 3,912 folders scanned from Desktop/Downloads/Documents/Pictures/Videos/Music, correctly categorized, with working stale-file and top-N views
+
+#### M3. Search
+
+- `atlas-search`: filter DSL parser (`type:`, `in:`, `size>`/`size<`/`size>=`/`size<=` with b/kb/mb/gb/tb units, `age>`/`age<`/`age>=`/`age<=` with d/w/m/y units, quoted phrases, free text), pure SQL planner (FTS5 prefix-match queries for free text, structured `WHERE` clauses for filters, bm25 ranking when text is present, `modified_at DESC` otherwise), a runner executing planned queries against a connection, and saved-search CRUD (unique by name) backed by migration 0003
+- `atlas-desktop`: `search_files`, `save_search`, `list_saved_searches`, `delete_saved_search` commands
+- UI: persistent Home/Search nav bar, search view with debounced search-as-you-type, results list, save/run/delete of saved searches
+- ADR 0005 (search filter DSL and FTS5 prefix matching, and why a trigram tokenizer was not adopted)
+- 33 unit/integration tests across parser, planner, runner, and saved searches
+- Verified end-to-end against the real indexed data (26,790 files): free-text search ("resume") returned real project files; combined filter (`type:pdf size>1mb`) returned only matching PDFs; save/re-run/delete of a saved search round-tripped correctly; nav bar toggled Home/Search both directions

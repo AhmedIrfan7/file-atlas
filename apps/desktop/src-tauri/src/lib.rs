@@ -7,6 +7,7 @@
 #![allow(clippy::needless_pass_by_value)]
 
 mod commands;
+mod duplicate_commands;
 mod search_commands;
 mod state;
 mod volume;
@@ -46,6 +47,12 @@ pub fn run() {
             search_commands::save_search,
             search_commands::list_saved_searches,
             search_commands::delete_saved_search,
+            duplicate_commands::hash_duplicates,
+            duplicate_commands::cancel_hash,
+            duplicate_commands::get_duplicate_groups,
+            duplicate_commands::trash_selected_paths,
+            duplicate_commands::restore_trash_action,
+            duplicate_commands::list_recent_actions,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

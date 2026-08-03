@@ -16,16 +16,25 @@ pub struct AppState {
     pub db: Mutex<rusqlite::Connection>,
     pub scan_cancel: Arc<AtomicBool>,
     pub scan_running: Arc<AtomicBool>,
+    pub hash_cancel: Arc<AtomicBool>,
+    pub hash_running: Arc<AtomicBool>,
 }
 
 impl AppState {
     pub fn new(db_path: &Path) -> anyhow::Result<Self> {
         let mut conn = open(db_path)?;
         apply_migrations(&mut conn)?;
+        atlas_core::seed_protected_paths(&conn, now_unix())?;
         Ok(Self {
             db: Mutex::new(conn),
             scan_cancel: Arc::new(AtomicBool::new(false)),
             scan_running: Arc::new(AtomicBool::new(false)),
+            hash_cancel: Arc::new(AtomicBool::new(false)),
+            hash_running: Arc::new(AtomicBool::new(false)),
         })
     }
+}
+
+fn now_unix() -> i64 {
+    time::OffsetDateTime::now_utc().unix_timestamp()
 }

@@ -23,6 +23,7 @@
 
 #![doc(html_root_url = "https://docs.rs/atlas-core/0.1.0")]
 
+pub mod actions;
 pub mod analytics;
 pub mod classifier;
 pub mod default_roots;
@@ -34,6 +35,9 @@ pub mod safety;
 pub mod scanner;
 pub mod skip_rules;
 
+pub use actions::{
+    list_recent_trash_actions, restore_action, trash_paths, RestoreOutcome, TrashOutcome,
+};
 pub use analytics::{
     home_summary, stale_bucket, top_largest, top_oldest, CategoryTotal, FileSummary, HomeSummary,
     StaleBucket,

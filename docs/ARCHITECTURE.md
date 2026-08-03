@@ -44,24 +44,43 @@ crates/
   atlas-search/        full-text and structured search
   atlas-recommender/   rule-based cleanup suggestions
 apps/
+  cli/                 atlas-cli: engine harness (scan, stats, volumes, search commands)
   desktop/             Tauri app: Rust shell in src-tauri/, React UI in src/
 docs/
   ARCHITECTURE.md      this file
   ROADMAP.md           milestone plan
   DECISIONS/           Architecture Decision Records (ADRs)
-  USER_GUIDE.md        end-user documentation (added at M2)
+  USER_GUIDE.md        end-user documentation (added once the app is stable enough to document)
 ```
 
 ## Data flow: a scan
 
-1. UI calls `scan_root(path)`.
-2. Tauri command handler validates the path and asks `atlas-core::scanner` to enumerate.
-3. `scanner` walks with `ignore::Walk`, honoring skip rules (`node_modules`, `.git`, hidden files unless user opts in, protected system paths).
-4. Each entry becomes a `FileRecord` and is pushed on a bounded channel.
-5. `atlas-core::indexer` consumes records and batches them into SQLite upserts via `atlas-db`.
-6. When indexing an entry finishes, `atlas-core::hasher` may queue it (based on size, extension, dedup relevance).
-7. `atlas-core::classifier` tags records post-index or on-demand.
-8. UI subscribes to progress via a Tauri event channel.
+1. UI calls the `start_scan` Tauri command with a list of root paths (from onboarding or "Add more folders").
+2. The command handler spawns a background thread and returns immediately; the UI listens for events rather than awaiting a result.
+3. For each root, the handler resolves the owning `atlas_platform::Volume`, records it, then calls `atlas_core::scan` on a second thread. `scan` walks with `walkdir`, honoring `SkipRules` (`node_modules`, `.git`, hidden files unless opted in, Windows system paths), and pushes a `ScanEvent` per entry onto a `crossbeam_channel`.
+4. `atlas_core::index_run_with_progress` consumes the channel on the command-handler thread: each `Entry` is classified (`atlas_core::classifier::classify`) and batched into SQLite upserts via `atlas_db::queries`; each `Progress` tick invokes a callback that emits a `scan-progress` Tauri event.
+5. When every root is done, the handler emits one `scan-finished` event with aggregate totals.
+6. The UI's Home view then calls `get_home_summary`, `get_top_largest`, `get_top_oldest`, and `get_stale_bucket` to render the map. These are pure reads against `atlas_core::analytics`.
+
+Hashing (for duplicate detection) and semantic classification beyond file extension are not part of this flow yet; they arrive in M4 and M9 respectively.
+
+## Tauri command surface
+
+Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapter: deserialize arguments, call into `atlas-core`/`atlas-db`/`atlas-platform`, serialize the result. No business logic lives in this file.
+
+| Command                                            | Purpose                                                                                                        |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `get_default_roots`                                | Suggested onboarding roots (Desktop, Downloads, Documents, Pictures, Videos, Music) that exist on this machine |
+| `start_scan(roots)`                                | Kick off a background scan of every root; returns immediately, progress arrives via events                     |
+| `cancel_scan`                                      | Request cancellation of the in-progress scan                                                                   |
+| `is_scanning`                                      | Whether a scan is currently running                                                                            |
+| `get_home_summary`                                 | Aggregate totals plus the category breakdown                                                                   |
+| `get_top_largest(limit)` / `get_top_oldest(limit)` | Top-N file lists for the home view                                                                             |
+| `get_stale_bucket(min_age_days, sample_limit)`     | Files not modified in at least `min_age_days`, with a sample                                                   |
+
+Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) during a scan, `scan-finished` (`{ roots_scanned, total_entries_persisted, total_removed_marked, total_errors, cancelled }`) once.
+
+`AppState` (`apps/desktop/src-tauri/src/state.rs`) holds the one SQLite connection behind a `parking_lot::Mutex`, plus `scan_cancel` and `scan_running` atomics. This is the concrete instance of the single-writer model from ADR 0003: the same connection serves both the indexer's writes during a scan and the analytics reads between scans, so there is never a "database is locked" race. The tradeoff, accepted for now, is that a long scan holds the lock for its duration; read commands issued mid-scan simply wait. A connection pool for concurrent reads during a scan is a candidate improvement once scans against multi-million-file volumes make that wait noticeable.
 
 ## Safety pipeline
 
@@ -105,10 +124,10 @@ SQLite is the source of truth for the index. Design notes:
 
 ## Concurrency
 
-- One Tokio runtime.
-- One writer task for SQLite (SQLite is single-writer). Reads go through a connection pool.
-- Bounded channels between scanner, indexer, and hasher to backpressure disk pressure.
-- A cooperative cancellation token per scan job.
+- One SQLite connection behind a mutex per running app instance (see "Tauri command surface" above), matching ADR 0003's single-writer model. A pool for concurrent reads is a future improvement, not yet needed.
+- The scanner runs on its own OS thread per root; the indexer consumes its channel on the command-handler thread.
+- `crossbeam_channel` between scanner and indexer; unbounded today, revisit if a scan of a very large volume shows memory pressure.
+- Cancellation is a shared `AtomicBool` checked by the scanner between entries and by `start_scan` between roots.
 
 ## Errors
 

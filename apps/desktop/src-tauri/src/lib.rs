@@ -12,6 +12,7 @@ mod recommendation_commands;
 mod search_commands;
 mod state;
 mod storage_commands;
+mod timeline_commands;
 mod volume;
 
 use tauri::Manager;
@@ -57,6 +58,9 @@ pub fn run() {
             duplicate_commands::list_recent_actions,
             recommendation_commands::get_cleanup_recommendations,
             storage_commands::get_storage_map_view,
+            timeline_commands::get_life_timeline,
+            timeline_commands::get_screenshot_bursts,
+            timeline_commands::get_project_bursts,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -375,13 +375,15 @@ mod tests {
         crate::safety::seed_defaults(&conn, 0).unwrap();
         let platform = FakePlatform::default();
 
-        let outcomes = trash_paths(
-            &conn,
-            &platform,
-            &["C:\\Windows\\system32\\notepad.exe".to_string()],
-            100,
-        )
-        .unwrap();
+        // A real protected prefix on whatever OS this runs on, not a
+        // hardcoded Windows path: the per-OS default lists (ADR 0010) mean a
+        // Windows-only literal here would pass on Windows and silently no-op
+        // (never actually block anything) on macOS or Linux CI.
+        let protected_path = format!(
+            "{}/system32/notepad.exe",
+            crate::safety::a_default_protected_prefix()
+        );
+        let outcomes = trash_paths(&conn, &platform, &[protected_path], 100).unwrap();
 
         assert!(!outcomes[0].ok);
         assert!(outcomes[0].action_id.is_none());

@@ -220,14 +220,14 @@ mod tests {
         let dir = std::env::temp_dir();
         let hidden = dir.join(".atlas_test_hidden_file");
         let plain = dir.join("atlas_test_plain_file");
-        std::fs::write(&hidden, b"x").unwrap();
-        std::fs::write(&plain, b"x").unwrap();
+        fs::write(&hidden, b"x").unwrap();
+        fs::write(&plain, b"x").unwrap();
 
         assert!(fs.is_hidden(&hidden).unwrap());
         assert!(!fs.is_hidden(&plain).unwrap());
 
-        std::fs::remove_file(&hidden).ok();
-        std::fs::remove_file(&plain).ok();
+        fs::remove_file(&hidden).ok();
+        fs::remove_file(&plain).ok();
     }
 
     #[test]

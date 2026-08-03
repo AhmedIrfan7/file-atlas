@@ -104,6 +104,14 @@ const fn user_trash_dir() -> Option<std::path::PathBuf> {
     None
 }
 
+/// A real protected prefix on whatever OS this is running on, for tests
+/// elsewhere in the crate (e.g. `actions.rs`) that need "a path the
+/// guardrail definitely blocks" without hardcoding one platform's paths.
+#[cfg(test)]
+pub(crate) fn a_default_protected_prefix() -> &'static str {
+    DEFAULT_PROTECTED_PREFIXES[0].0
+}
+
 /// The outcome of a guardrail check for one path.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GuardrailDecision {
@@ -178,11 +186,8 @@ mod tests {
         c
     }
 
-    /// One real default prefix to test against, taken from the actual
-    /// per-OS list rather than hardcoded, so these tests exercise whatever
-    /// this platform's real defaults are instead of assuming Windows paths.
     fn a_protected_prefix() -> &'static str {
-        DEFAULT_PROTECTED_PREFIXES[0].0
+        a_default_protected_prefix()
     }
 
     #[test]

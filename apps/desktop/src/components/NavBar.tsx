@@ -7,6 +7,7 @@ const TABS: { screen: ScreenState; label: string }[] = [
   { screen: "duplicates", label: "Duplicates" },
   { screen: "cleanup", label: "Cleanup" },
   { screen: "storage", label: "Storage" },
+  { screen: "timeline", label: "Timeline" },
 ];
 
 export default function NavBar() {

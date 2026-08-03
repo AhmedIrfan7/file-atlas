@@ -8,8 +8,10 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type {
   ActionRow,
+  Burst,
   DuplicateGroup,
   FileSummary,
+  Granularity,
   HomeSummary,
   Recommendation,
   RestoreOutcome,
@@ -18,6 +20,7 @@ import type {
   StaleBucket,
   StorageMapResponse,
   SuggestedRoot,
+  TimelineResponse,
   TrashOutcome,
 } from "../types";
 
@@ -106,4 +109,19 @@ export function getStorageMapView(
   sinceDays: number | null,
 ): Promise<StorageMapResponse> {
   return invoke("get_storage_map_view", { path, category, sinceDays });
+}
+
+export function getLifeTimeline(
+  granularity: Granularity,
+  sinceDays: number | null,
+): Promise<TimelineResponse> {
+  return invoke("get_life_timeline", { granularity, sinceDays });
+}
+
+export function getScreenshotBursts(): Promise<Burst[]> {
+  return invoke("get_screenshot_bursts");
+}
+
+export function getProjectBursts(): Promise<Burst[]> {
+  return invoke("get_project_bursts");
 }

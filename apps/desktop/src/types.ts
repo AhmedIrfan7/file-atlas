@@ -139,6 +139,28 @@ export interface ScanProgressEvent {
   bytes_seen: number;
 }
 
+export type Granularity = "day" | "month";
+
+export interface TimelineBucket {
+  period_start: number;
+  file_count: number;
+  total_bytes: number;
+}
+
+export interface TimelineResponse {
+  granularity: Granularity;
+  buckets: TimelineBucket[];
+}
+
+export interface Burst {
+  kind: string;
+  folder: string | null;
+  period_start: number;
+  file_count: number;
+  total_bytes: number;
+  sample: FileSummary[];
+}
+
 export interface ScanFinishedEvent {
   roots_scanned: number;
   total_entries_persisted: number;

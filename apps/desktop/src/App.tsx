@@ -9,6 +9,7 @@ import OnboardingWizard from "./components/OnboardingWizard";
 import ScanningView from "./components/ScanningView";
 import SearchView from "./components/SearchView";
 import StorageMapView from "./components/StorageMapView";
+import TimelineView from "./components/TimelineView";
 import { getHomeSummary } from "./lib/atlas";
 import { useDuplicatesStore } from "./store/duplicatesStore";
 import { useScanStore } from "./store/scanStore";
@@ -88,7 +89,8 @@ export default function App() {
         screen === "search" ||
         screen === "duplicates" ||
         screen === "cleanup" ||
-        screen === "storage") && (
+        screen === "storage" ||
+        screen === "timeline") && (
         <>
           <NavBar />
           {screen === "home" && <HomeView />}
@@ -96,6 +98,7 @@ export default function App() {
           {screen === "duplicates" && <DuplicatesView />}
           {screen === "cleanup" && <CleanupView />}
           {screen === "storage" && <StorageMapView />}
+          {screen === "timeline" && <TimelineView />}
         </>
       )}
     </>

@@ -68,17 +68,23 @@ Hashing (for duplicate detection) and semantic classification beyond file extens
 
 Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapter: deserialize arguments, call into `atlas-core`/`atlas-db`/`atlas-platform`, serialize the result. No business logic lives in this file.
 
-| Command                                            | Purpose                                                                                                        |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `get_default_roots`                                | Suggested onboarding roots (Desktop, Downloads, Documents, Pictures, Videos, Music) that exist on this machine |
-| `start_scan(roots)`                                | Kick off a background scan of every root; returns immediately, progress arrives via events                     |
-| `cancel_scan`                                      | Request cancellation of the in-progress scan                                                                   |
-| `is_scanning`                                      | Whether a scan is currently running                                                                            |
-| `get_home_summary`                                 | Aggregate totals plus the category breakdown                                                                   |
-| `get_top_largest(limit)` / `get_top_oldest(limit)` | Top-N file lists for the home view                                                                             |
-| `get_stale_bucket(min_age_days, sample_limit)`     | Files not modified in at least `min_age_days`, with a sample                                                   |
+| Command                                                                             | Purpose                                                                                                        |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `get_default_roots`                                                                 | Suggested onboarding roots (Desktop, Downloads, Documents, Pictures, Videos, Music) that exist on this machine |
+| `start_scan(roots)`                                                                 | Kick off a background scan of every root; returns immediately, progress arrives via events                     |
+| `cancel_scan`                                                                       | Request cancellation of the in-progress scan                                                                   |
+| `is_scanning`                                                                       | Whether a scan is currently running                                                                            |
+| `get_home_summary`                                                                  | Aggregate totals plus the category breakdown                                                                   |
+| `get_top_largest(limit)` / `get_top_oldest(limit)`                                  | Top-N file lists for the home view                                                                             |
+| `get_stale_bucket(min_age_days, sample_limit)`                                      | Files not modified in at least `min_age_days`, with a sample                                                   |
+| `search_files(query_text, limit)`                                                   | Parse `query_text` through `atlas_search::parser` and run it (see below)                                       |
+| `save_search(name, query_text)` / `list_saved_searches` / `delete_saved_search(id)` | Saved-search CRUD, `apps/desktop/src-tauri/src/search_commands.rs`                                             |
 
 Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) during a scan, `scan-finished` (`{ roots_scanned, total_entries_persisted, total_removed_marked, total_errors, cancelled }`) once.
+
+### Search
+
+`search_files` sends `query_text` through `atlas_search`'s three pure stages before touching the database: `parser::parse` turns it into a `SearchQuery` (free text plus a `Vec<Filter>`), `planner::plan` turns that into parameterized SQL against `files` (and `files_fts` when there is free text), and `runner::search` executes it. Parser and planner have no I/O and are unit tested without a connection; only `runner`'s tests open a real (in-memory) SQLite database. See ADR 0005 for the filter DSL grammar and why free text uses FTS5 prefix queries rather than a trigram tokenizer.
 
 `AppState` (`apps/desktop/src-tauri/src/state.rs`) holds the one SQLite connection behind a `parking_lot::Mutex`, plus `scan_cancel` and `scan_running` atomics. This is the concrete instance of the single-writer model from ADR 0003: the same connection serves both the indexer's writes during a scan and the analytics reads between scans, so there is never a "database is locked" race. The tradeoff, accepted for now, is that a long scan holds the lock for its duration; read commands issued mid-scan simply wait. A connection pool for concurrent reads during a scan is a candidate improvement once scans against multi-million-file volumes make that wait noticeable.
 

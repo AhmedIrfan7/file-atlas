@@ -18,3 +18,9 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
+rusqlite = { workspace = true }
+time = { workspace = true }
+atlas-db = { path = "../atlas-db" }
+
+[dev-dependencies]
+tempfile = { workspace = true }

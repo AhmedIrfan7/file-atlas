@@ -371,8 +371,12 @@ name = "atlas-search"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "atlas-db",
+ "rusqlite",
  "serde",
+ "tempfile",
  "thiserror 2.0.19",
+ "time",
  "tracing",
 ]
 

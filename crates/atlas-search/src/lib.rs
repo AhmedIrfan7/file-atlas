@@ -15,5 +15,7 @@
 #![doc(html_root_url = "https://docs.rs/atlas-search/0.1.0")]
 
 pub mod parser;
+pub mod planner;
 
 pub use parser::{parse, Cmp, Filter, ParseError, SearchQuery};
+pub use planner::{plan, Param, PlannedQuery};

@@ -79,8 +79,12 @@ Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapte
 | `get_stale_bucket(min_age_days, sample_limit)`                                      | Files not modified in at least `min_age_days`, with a sample                                                   |
 | `search_files(query_text, limit)`                                                   | Parse `query_text` through `atlas_search::parser` and run it (see below)                                       |
 | `save_search(name, query_text)` / `list_saved_searches` / `delete_saved_search(id)` | Saved-search CRUD, `apps/desktop/src-tauri/src/search_commands.rs`                                             |
+| `hash_duplicates` / `cancel_hash`                                                   | Kick off / cancel a size-gated BLAKE3 hashing pass (`apps/desktop/src-tauri/src/duplicate_commands.rs`)        |
+| `get_duplicate_groups(limit)`                                                       | Duplicate groups with a suggested keeper, most wasted space first                                              |
+| `trash_selected_paths(paths)`                                                       | Execute step of the safety pipeline below: guardrails, send to OS trash, log, mark removed                     |
+| `restore_trash_action(action_id)` / `list_recent_actions(limit)`                    | Undo affordance: reverse one trash action, or list recent ones for a "recently deleted" panel                  |
 
-Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) during a scan, `scan-finished` (`{ roots_scanned, total_entries_persisted, total_removed_marked, total_errors, cancelled }`) once.
+Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) / `scan-finished` during a scan; `hash-progress` (`{ files_hashed, files_total }`) / `hash-finished` (`{ files_hashed, errors }`) during a hash pass.
 
 ### Search
 
@@ -90,18 +94,22 @@ Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen
 
 ## Safety pipeline
 
-Every destructive operation (`trash`, `permanent_delete`, `move`, `rename`, `bulk_move`) goes through:
+Every destructive operation goes through:
 
 ```
 request -> guardrails -> preview -> confirm -> execute -> action_log -> undo affordance
 ```
 
-- **guardrails** rejects operations on protected paths, oversize, or high-risk targets. Returns a decision object with human-readable reasons.
-- **preview** materializes what will happen (paths, sizes, warnings) for the UI.
-- **confirm** requires an explicit UI click. Above thresholds, a typed confirmation.
-- **execute** performs the operation. Deletes go to the OS Recycle Bin/Trash unless the user explicitly took the "permanent" path.
-- **action_log** writes a row per mutation, before and after, with enough metadata to undo.
-- **undo affordance** exposes a "restore" button for a rolling window.
+Implemented for trash/restore as of M4 (see ADR 0006 for why each piece looks the way it does):
+
+- **guardrails**: `atlas_core::safety::check_paths` rejects any path under a `protected_paths` prefix (`C:\Windows`, `C:\Program Files`, `C:\ProgramData`, etc.), seeded self-healingly on every startup by `atlas_core::safety::seed_defaults` so a missing row never quietly means "unprotected."
+- **preview**: built client-side in `DuplicatesView`/`DeletePreviewBar` from the file list and total bytes before any command is called.
+- **confirm**: an explicit second click in `DeletePreviewBar` (the button only sends the trash command after the user clicks "Confirm delete" on the preview).
+- **execute**: `atlas_core::actions::trash_paths` calls `PlatformFs::send_to_trash`, implemented via the `trash` crate (`atlas_platform::trash_common`), which wraps the real Windows Recycle Bin / macOS Trash / Linux freedesktop trash.
+- **action_log**: every successful trash writes one `actions_log` row (`op = 'trash'`) with enough metadata (parent, name, deletion timestamp, JSON-encoded in `metadata`) to find the item again in the OS trash listing later, and sets `files.removed_at`.
+- **undo affordance**: `atlas_core::actions::restore_action` reverses exactly one trash action by id; the UI's "Recently deleted" panel lists recent ones with a Restore button per item. Undo is intentionally scoped to trash/restore only, not a general action-reversal framework, until a second action type exists to validate that shape against.
+
+Deferred beyond M4: oversize/high-risk-target guardrails beyond protected paths, and permanent (non-trash) delete.
 
 ## Platform trait
 

@@ -85,6 +85,8 @@ Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapte
 | `restore_trash_action(action_id)` / `list_recent_actions(limit)`                    | Undo affordance: reverse one trash action, or list recent ones for a "recently deleted" panel                  |
 | `get_cleanup_recommendations`                                                       | Every current rule-engine recommendation (see below); execution reuses `trash_selected_paths` above            |
 | `get_storage_map_view(path, category, since_days)`                                  | Folder-size breakdown for one drill-down level (see below)                                                     |
+| `get_life_timeline(granularity, since_days)`                                        | File-creation histogram bucketed by day or month (see below)                                                   |
+| `get_screenshot_bursts` / `get_project_bursts`                                      | Auto-detected creation-activity clusters (see below)                                                           |
 
 Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) / `scan-finished` during a scan; `hash-progress` (`{ files_hashed, files_total }`) / `hash-finished` (`{ files_hashed, errors }`) during a hash pass.
 
@@ -103,6 +105,12 @@ Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen
 `get_storage_map_view` calls `atlas_core::storage_map::get_storage_map`, which computes folder sizes on demand rather than from a maintained rollup: given a scope path (or `None` for the root list of completed scan roots), it sums `files.size_bytes` for every live row whose path is the scope itself or starts with `scope\` (an escaped `LIKE` prefix scan against the existing `path` index), once per immediate child plus one synthetic "(files in this folder)" node for loose files. `category` and `since_days` filters narrow the same sum. See ADR 0008 for why this beats a maintained rollup at the scale of one drill-down level, and for the treemap-vs-sunburst and fixed-presets-vs-slider choices on the frontend.
 
 The frontend (`apps/desktop/src/components/StorageMapView.tsx`) holds an explicit breadcrumb stack (`storageMapStore.ts`) rather than parsing path strings for "back" navigation, and lays out each response's nodes with a hand-rolled squarified treemap (`apps/desktop/src/lib/treemap.ts`, unit tested, no charting library dependency).
+
+### Life timeline
+
+`get_life_timeline` calls `atlas_core::timeline::get_timeline`, which buckets every live file's `created_at` into day or month periods entirely in SQL (`strftime(created_at, 'unixepoch', 'start of day' | 'start of month')`, migration 0004's `idx_files_created` index makes the grouping indexed rather than a full scan). `get_screenshot_bursts` and `get_project_bursts` call the two burst detectors in the same module: days with an unusual number of screenshot-named image creations anywhere in the index, and folder-and-day pairs with an unusual number of file creations at once. Both use fixed threshold constants (`SCREENSHOT_BURST_MIN_COUNT`, `PROJECT_BURST_MIN_COUNT`), the same style as `atlas_recommender::engine`'s fixed rule thresholds. See ADR 0009 for why only two burst types ship now (receipt clusters and semester periods are deferred, not dropped) and why granularity is day/month only, not a generic picker.
+
+The frontend (`apps/desktop/src/components/TimelineView.tsx`) offers three fixed view presets, This week / This year / All time (`timelineStore.ts`), reusing the storage map's segmented-control pattern from ADR 0008, and renders the histogram as a plain CSS bar chart (`TimelineChart.tsx`) with burst results shown as cards (`BurstCard.tsx`).
 
 ## Safety pipeline
 

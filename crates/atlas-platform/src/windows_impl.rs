@@ -58,6 +58,18 @@ impl PlatformFs for WindowsFs {
         let attrs = get_attrs(path)?;
         Ok(attrs & FILE_ATTRIBUTE_SYSTEM.0 != 0)
     }
+
+    fn open_in_file_manager(&self, path: &Path) -> Result<()> {
+        // explorer.exe parses its own command line rather than using
+        // standard argv splitting, so `/select,<path>` must be one argument,
+        // not `/select,` and the path as two separate ones.
+        let select_arg = format!("/select,{}", path.display());
+        std::process::Command::new("explorer.exe")
+            .arg(select_arg)
+            .spawn()
+            .map_err(|e| PlatformError::Api(format!("failed to launch Explorer: {e}")))?;
+        Ok(())
+    }
 }
 
 fn to_wide_null(s: &str) -> Vec<u16> {

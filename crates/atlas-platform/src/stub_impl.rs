@@ -1,8 +1,8 @@
-//! Non-Windows stub implementation. Enough to compile and to run tests that
-//! do not actually touch the filesystem, so macOS and Linux CI stays green
-//! until real implementations arrive in M8.
+//! Fallback stub for any OS this project does not target (Windows, macOS,
+//! and Linux all have real implementations as of M8). Enough to compile;
+//! every method reports `Unsupported`.
 
-#![cfg(not(windows))]
+#![cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 
 use std::path::Path;
 

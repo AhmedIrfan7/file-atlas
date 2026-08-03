@@ -7,8 +7,10 @@
 //! ## Module map
 //!
 //! - `trait_defs` the `PlatformFs` trait and shared types
-//! - `windows_impl` Windows implementation (Recycle Bin, Shell APIs)
-//! - `stub_impl` non-Windows fallback until M8 fills in macOS and Linux
+//! - `windows_impl` Windows implementation (Recycle Bin, Explorer, Shell APIs)
+//! - `macos_impl` macOS implementation (Trash, Finder, `statfs`)
+//! - `linux_impl` Linux implementation (freedesktop trash, `/proc/mounts`, `xdg-open`)
+//! - `stub_impl` fallback for any other OS this project does not target
 
 #![doc(html_root_url = "https://docs.rs/atlas-platform/0.1.0")]
 
@@ -18,7 +20,13 @@ pub mod trash_common;
 #[cfg(windows)]
 pub mod windows_impl;
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+pub mod macos_impl;
+
+#[cfg(target_os = "linux")]
+pub mod linux_impl;
+
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 pub mod stub_impl;
 
 pub use trait_defs::{PlatformError, PlatformFs, Result, TrashHandle, Volume};
@@ -27,7 +35,13 @@ pub use trait_defs::{PlatformError, PlatformFs, Result, TrashHandle, Volume};
 #[cfg(windows)]
 pub type CurrentFs = windows_impl::WindowsFs;
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+pub type CurrentFs = macos_impl::MacosFs;
+
+#[cfg(target_os = "linux")]
+pub type CurrentFs = linux_impl::LinuxFs;
+
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 pub type CurrentFs = stub_impl::StubFs;
 
 /// Convenience constructor.

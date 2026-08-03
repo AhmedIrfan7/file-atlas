@@ -16,6 +16,8 @@
 
 pub mod parser;
 pub mod planner;
+pub mod runner;
 
 pub use parser::{parse, Cmp, Filter, ParseError, SearchQuery};
 pub use planner::{plan, Param, PlannedQuery};
+pub use runner::{search, SearchHit};

@@ -28,7 +28,9 @@ time = { workspace = true }
 crossbeam-channel = { workspace = true }
 rusqlite = { workspace = true }
 dirs = { workspace = true }
+blake3 = { workspace = true }
 atlas-db = { path = "../atlas-db" }
+atlas-platform = { path = "../atlas-platform" }
 
 [dev-dependencies]
 tempfile = { workspace = true }

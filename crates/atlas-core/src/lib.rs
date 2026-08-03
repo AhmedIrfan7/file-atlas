@@ -27,6 +27,7 @@ pub mod analytics;
 pub mod classifier;
 pub mod default_roots;
 pub mod file_record;
+pub mod hasher;
 pub mod indexer;
 pub mod scanner;
 pub mod skip_rules;
@@ -38,6 +39,7 @@ pub use analytics::{
 pub use classifier::{classify, Category};
 pub use default_roots::{default_roots, SuggestedRoot};
 pub use file_record::FileRecord;
+pub use hasher::{hash_pending_duplicates, HashProgress, HashStats, MIN_HASH_SIZE_BYTES};
 pub use indexer::{
     record_volume, root_prefix, run as index_run, run_with_progress as index_run_with_progress,
     IndexError, IndexProgress, IndexStats, ScanMeta,

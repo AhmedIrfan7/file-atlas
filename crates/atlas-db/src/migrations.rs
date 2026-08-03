@@ -45,6 +45,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "files_fts",
         sql: include_str!("../migrations/0002_fts.sql"),
     },
+    Migration {
+        version: 3,
+        name: "saved_searches",
+        sql: include_str!("../migrations/0003_saved_searches.sql"),
+    },
 ];
 
 /// Apply every pending migration to the given connection. Idempotent.

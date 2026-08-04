@@ -64,8 +64,8 @@ pub fn plan(query: &SearchQuery, now_unix: i64, limit: u32) -> PlannedQuery {
                 params.push(Param::Text(ext.clone()));
             }
             Filter::InFolder(substr) => {
-                conditions.push(format!("f.parent LIKE ?{}", params.len() + 1));
-                params.push(Param::Text(format!("%{substr}%")));
+                conditions.push(format!("f.parent LIKE ?{} ESCAPE '!'", params.len() + 1));
+                params.push(Param::Text(format!("%{}%", escape_like(substr))));
             }
             Filter::Size { cmp, bytes } => {
                 let op = cmp_op(*cmp);
@@ -120,6 +120,16 @@ const fn invert_cmp(cmp: Cmp) -> Cmp {
         Cmp::Lt => Cmp::Gt,
         Cmp::Le => Cmp::Ge,
     }
+}
+
+/// Escape `%`, `_`, and the escape character itself (`!`) so an `in:`
+/// substring containing any of them (e.g. a real folder named "50%_off", or
+/// a Windows username like "John_Doe") is matched literally rather than as a
+/// `LIKE` wildcard. Without this, `in:john_doe` would also match
+/// `in:johnXdoe` (any single character in place of `_`), silently returning
+/// broader results than the literal substring the user typed.
+fn escape_like(s: &str) -> String {
+    s.replace('!', "!!").replace('%', "!%").replace('_', "!_")
 }
 
 /// Build a safe FTS5 MATCH expression from free text. Each whitespace-split
@@ -198,6 +208,20 @@ mod tests {
         assert!(plan
             .params
             .contains(&Param::Text("%downloads%".to_string())));
+        assert!(plan.sql.contains("ESCAPE '!'"));
+    }
+
+    #[test]
+    fn folder_filter_escapes_like_wildcard_characters() {
+        // A real folder name like "John_Doe" (a common Windows username) or
+        // "50%_off" must be matched literally, not as a LIKE wildcard: the
+        // underscore in "John_Doe" would otherwise match any single
+        // character, silently returning files from unrelated folders too.
+        let q = parse("in:John_Doe").unwrap();
+        let plan = plan(&q, 1_000, 50);
+        assert!(plan
+            .params
+            .contains(&Param::Text("%John!_Doe%".to_string())));
     }
 
     #[test]

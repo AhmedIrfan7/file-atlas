@@ -208,4 +208,65 @@ mod tests {
         let hits = search(&conn, &q, 2_000, 50).unwrap();
         assert!(hits.is_empty());
     }
+
+    #[test]
+    fn folder_filter_does_not_treat_underscore_as_wildcard() {
+        // "John_Doe" is a real, common Windows username. Unescaped, the `_`
+        // in a LIKE pattern matches any single character, so `in:John_Doe`
+        // would also match the unrelated folder "JohnXDoe".
+        let mut conn = make_conn();
+        let tx = conn.transaction().unwrap();
+        upsert_volume(
+            &tx,
+            &VolumeRow {
+                id: "vol:test".into(),
+                label: None,
+                fs_type: None,
+                mount: "C:\\".into(),
+                total_bytes: None,
+                first_seen: 0,
+                last_seen: 0,
+            },
+        )
+        .unwrap();
+        for (path, parent) in [
+            ("C:\\Users\\John_Doe\\resume.pdf", "C:\\Users\\John_Doe"),
+            ("C:\\Users\\JohnXDoe\\resume.pdf", "C:\\Users\\JohnXDoe"),
+        ] {
+            upsert_file(
+                &tx,
+                &FileRow {
+                    path: path.to_string(),
+                    parent: parent.to_string(),
+                    name: "resume.pdf".to_string(),
+                    extension: Some("pdf".to_string()),
+                    size_bytes: 10,
+                    created_at: Some(1),
+                    modified_at: Some(1),
+                    accessed_at: Some(1),
+                    hash_blake3: None,
+                    hash_size: None,
+                    category: Some("Document".to_string()),
+                    is_dir: false,
+                    is_hidden: false,
+                    is_symlink: false,
+                    volume_id: "vol:test".to_string(),
+                    first_seen: 0,
+                    last_seen: 0,
+                    removed_at: None,
+                },
+            )
+            .unwrap();
+        }
+        tx.commit().unwrap();
+
+        let q = parse("in:John_Doe").unwrap();
+        let hits = search(&conn, &q, 2_000, 50).unwrap();
+        assert_eq!(
+            hits.len(),
+            1,
+            "underscore in the folder filter must match literally, not as a wildcard"
+        );
+        assert_eq!(hits[0].path, "C:\\Users\\John_Doe\\resume.pdf");
+    }
 }

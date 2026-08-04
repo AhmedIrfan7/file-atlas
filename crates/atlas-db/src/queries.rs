@@ -111,16 +111,32 @@ pub fn mark_removed_since(
     scan_ts: i64,
     now: i64,
 ) -> rusqlite::Result<usize> {
+    let escaped = escape_like(root_prefix);
+    let forward_pattern = format!("{escaped}/%");
+    let back_pattern = format!("{escaped}\\%");
     tx.execute(
         r"
         UPDATE files
         SET removed_at = ?3
         WHERE last_seen < ?2
           AND removed_at IS NULL
-          AND (path = ?1 OR path LIKE ?1 || '/%' OR path LIKE ?1 || '\%')
+          AND (path = ?1 OR path LIKE ?4 ESCAPE '!' OR path LIKE ?5 ESCAPE '!')
         ",
-        params![root_prefix, scan_ts, now],
+        params![root_prefix, scan_ts, now, forward_pattern, back_pattern],
     )
+}
+
+/// Escape `%`, `_`, and the escape character itself (`!`) so a root prefix
+/// containing any of them (e.g. a real folder named "50%_off", or a Windows
+/// username like "John_Doe") is matched literally in the `LIKE` patterns
+/// above rather than as a wildcard. Without this, rescanning
+/// "C:\Users\John_Doe" could incorrectly mark files under the unrelated
+/// "C:\Users\JohnXDoe" as removed, since `_` matches any single character.
+/// Mirrors `atlas_core::storage_map`'s and `atlas_search::planner`'s
+/// identically-named helpers, kept as its own copy since this crate cannot
+/// depend on either without a circular dependency.
+fn escape_like(s: &str) -> String {
+    s.replace('!', "!!").replace('%', "!%").replace('_', "!_")
 }
 
 /// Count of rows currently visible (not removed).
@@ -271,6 +287,37 @@ mod tests {
         let vols = list_volumes(&conn).unwrap();
         assert_eq!(vols.len(), 1);
         assert_eq!(vols[0].id, "vol:test");
+    }
+
+    #[test]
+    fn mark_removed_since_does_not_treat_underscore_as_wildcard() {
+        // "John_Doe" is a real, common Windows username. Unescaped, the `_`
+        // in a LIKE pattern matches any single character, so rescanning
+        // "C:\Users\John_Doe" could incorrectly mark files under the
+        // unrelated "C:\Users\JohnXDoe" as removed too.
+        let mut conn = make_conn();
+        let tx = conn.transaction().unwrap();
+        upsert_volume(&tx, &sample_volume()).unwrap();
+        upsert_file(&tx, &sample_file("C:\\Users\\John_Doe\\note.txt", 1, 100)).unwrap();
+        upsert_file(&tx, &sample_file("C:\\Users\\JohnXDoe\\note.txt", 1, 100)).unwrap();
+        let touched = mark_removed_since(&tx, "C:\\Users\\John_Doe", 400, 1_000).unwrap();
+        assert_eq!(
+            touched, 1,
+            "only the real John_Doe file should be swept, not the unrelated JohnXDoe one"
+        );
+        tx.commit().unwrap();
+
+        let real = get_file_by_path(&conn, "C:\\Users\\John_Doe\\note.txt")
+            .unwrap()
+            .unwrap();
+        let decoy = get_file_by_path(&conn, "C:\\Users\\JohnXDoe\\note.txt")
+            .unwrap()
+            .unwrap();
+        assert_eq!(real.removed_at, Some(1_000));
+        assert_eq!(
+            decoy.removed_at, None,
+            "an unrelated folder must not be swept just for sharing prefix characters"
+        );
     }
 
     #[test]

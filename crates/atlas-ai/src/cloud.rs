@@ -61,6 +61,7 @@ impl ChatProvider for CloudProvider {
         struct Req<'a> {
             model: &'a str,
             messages: Vec<Msg<'a>>,
+            temperature: f32,
         }
         #[derive(Deserialize)]
         struct RespMessage {
@@ -91,6 +92,12 @@ impl ChatProvider for CloudProvider {
                         content: user_message,
                     },
                 ],
+                // Same reasoning as ollama.rs: translating into a fixed
+                // filter grammar wants the model's single best answer
+                // reliably, not a random sample from its output
+                // distribution. Left unset, most OpenAI-compatible APIs
+                // default to 0.7-1.0.
+                temperature: 0.0,
             })
             .send()
             .map_err(|e| AiError::Request(e.to_string()))?;

@@ -109,7 +109,11 @@ pub fn translate(provider: &dyn ChatProvider, natural_language: &str) -> Transla
     // SYSTEM_PROMPT). None of that fails to parse, since anything not
     // recognized as a filter is deliberately accepted as free text, so it
     // has to be caught here instead of as a parse error.
-    if free_text_word_count(&parsed) > MAX_FREE_TEXT_WORDS {
+    // Off-by-one on purpose: observed directly from a real model, a garbage
+    // response ("size:gb size:kb size:mb size:tb folder:name largest folders
+    // larger than 20mb", none of which are recognized filter prefixes) came
+    // in at exactly 10 free-text words and slipped through a `>` check.
+    if free_text_word_count(&parsed) >= MAX_FREE_TEXT_WORDS {
         return fallback();
     }
     TranslatedQuery {
@@ -288,6 +292,24 @@ mod tests {
         };
         let result = translate(&provider, "big files");
         assert_eq!(result.query_text, "big files");
+        assert!(result.used_fallback);
+    }
+
+    #[test]
+    fn ten_word_garbage_response_falls_back_to_free_text() {
+        // Observed directly from a real model asked to translate "folders
+        // larger than 20 mb": it returned exactly this, ten words long, none
+        // of them a recognized filter prefix (size: and folder: are not
+        // size>/in:). A `> 10` check lets exactly-10 slip through; this must
+        // be `>= 10`.
+        let provider = FakeChat {
+            response: Ok(
+                "size:gb size:kb size:mb size:tb folder:name largest folders larger than 20mb"
+                    .to_string(),
+            ),
+        };
+        let result = translate(&provider, "folders larger than 20 mb");
+        assert_eq!(result.query_text, "folders larger than 20 mb");
         assert!(result.used_fallback);
     }
 
@@ -513,5 +535,29 @@ mod tests {
             "\"folders\" has no extension to match, so any type: filter here is invented: {}",
             result.query_text
         );
+    }
+
+    // Reproduces the actual complaint, not just a single bad output: the
+    // exact same query, asked repeatedly, gave a real translation once, a
+    // ten-word garbage response another time, and a different garbage
+    // response a third time. That is Ollama's default sampling temperature
+    // (~0.8) doing exactly what it is designed to do for creative text,
+    // applied to a task that instead wants the model's single best answer
+    // reliably. With temperature fixed at 0 in ollama.rs, the same input
+    // should produce the same output every time.
+    #[test]
+    #[ignore = "requires llama3.2:1b pulled locally"]
+    fn real_local_model_is_deterministic_across_repeated_identical_queries() {
+        let provider =
+            crate::ollama::OllamaProvider::local_default(Some("llama3.2:1b".to_string()));
+        let query = "folders larger than 20 mb";
+        let first = translate(&provider, query);
+        for attempt in 2..=5 {
+            let repeat = translate(&provider, query);
+            assert_eq!(
+                repeat, first,
+                "attempt {attempt} produced a different result than the first call for the exact same query"
+            );
+        }
     }
 }

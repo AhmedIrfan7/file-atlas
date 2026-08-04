@@ -135,10 +135,15 @@ impl ChatProvider for OllamaProvider {
             content: &'a str,
         }
         #[derive(Serialize)]
+        struct Options {
+            temperature: f32,
+        }
+        #[derive(Serialize)]
         struct Req<'a> {
             model: &'a str,
             messages: Vec<Msg<'a>>,
             stream: bool,
+            options: Options,
         }
         #[derive(Deserialize)]
         struct RespMessage {
@@ -167,6 +172,16 @@ impl ChatProvider for OllamaProvider {
                     },
                 ],
                 stream: false,
+                // This is a structured-translation task (plain English into
+                // a fixed filter grammar), not creative writing: it wants the
+                // model's single best answer, reliably, not a random sample
+                // from its output distribution. Without this, Ollama's
+                // default temperature (~0.8) means the exact same query can
+                // translate correctly on one call and produce nonsense on
+                // the next, which is real, reported behavior: the same
+                // request translated to a real query, then garbage, then a
+                // different garbage, across repeated tries.
+                options: Options { temperature: 0.0 },
             })
             .send()
             .map_err(|e| AiError::Unavailable(e.to_string()))?;

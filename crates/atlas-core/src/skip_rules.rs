@@ -160,21 +160,35 @@ impl SkipRules {
 
 /// Windows and macOS filesystems are case-insensitive by default; Linux
 /// filesystems are case-sensitive, so a prefix match there must not conflate
-/// `/USR` with `/usr`. Mirrors `atlas_core::safety::path_has_prefix`.
+/// `/USR` with `/usr`. Mirrors `atlas_core::safety::path_has_prefix`,
+/// including the path-boundary check below: without it, a folder named
+/// e.g. "C:\WindowsOld" would be silently skipped from scanning entirely
+/// just for sharing characters with the real "C:\Windows" system prefix.
 #[cfg(not(target_os = "linux"))]
 fn path_has_prefix(haystack: &str, needle: &str) -> bool {
     if haystack.len() < needle.len() {
         return false;
     }
-    haystack
+    let chars_match = haystack
         .chars()
         .zip(needle.chars())
-        .all(|(a, b)| a.eq_ignore_ascii_case(&b))
+        .all(|(a, b)| a.eq_ignore_ascii_case(&b));
+    chars_match && is_path_boundary(haystack, needle.len())
 }
 
 #[cfg(target_os = "linux")]
 fn path_has_prefix(haystack: &str, needle: &str) -> bool {
-    haystack.starts_with(needle)
+    haystack.starts_with(needle) && is_path_boundary(haystack, needle.len())
+}
+
+/// True when byte offset `len` in `haystack` is a real path-component
+/// boundary: the end of the string, or immediately followed by a path
+/// separator. Not platform-specific itself; used by both `path_has_prefix`
+/// variants above. See `atlas_core::safety::is_path_boundary` for why the
+/// byte index is safe to use directly here (every `needle` this is called
+/// with is a plain-ASCII path).
+fn is_path_boundary(haystack: &str, len: usize) -> bool {
+    matches!(haystack.as_bytes().get(len), None | Some(b'\\' | b'/'))
 }
 
 #[cfg(test)]
@@ -220,6 +234,20 @@ mod tests {
         let shouted = a_system_prefix().to_uppercase();
         let inner = format!("{shouted}/inner");
         assert!(r.allow_dir(&PathBuf::from(&inner), "inner", false));
+    }
+
+    #[test]
+    fn does_not_skip_an_unrelated_dir_that_shares_prefix_characters() {
+        // A folder like "C:\WindowsOld" merely starts with the same
+        // characters as a system prefix; it is not actually inside it, and a
+        // plain string-prefix check would wrongly skip scanning it entirely.
+        let r = SkipRules::default();
+        let prefix = a_system_prefix();
+        let sibling = format!("{prefix}Old/inner");
+        assert!(
+            r.allow_dir(&PathBuf::from(&sibling), "inner", false),
+            "a folder merely sharing prefix characters must not be skipped"
+        );
     }
 
     #[test]

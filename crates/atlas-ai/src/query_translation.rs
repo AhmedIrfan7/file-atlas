@@ -44,7 +44,13 @@ Grammar you may use, space-separated, in any combination:
 - age>N, age<N, age>=N, age<=N       N is a number plus a unit: d, w, m, y (e.g. age<1y means modified within the last year)
 - any other words are free text, matched against file name and path; wrap a phrase that must stay together in double quotes
 
-If the request has no filterable structure, reply with it as plain free text instead of inventing filters that do not apply."#;
+Only include a filter the request specifically implies. Do not add an age, folder, or size filter just because one could apply; an unrequested filter narrows the search and hides files the person actually wants to see. If the request has no filterable structure at all, reply with it as plain free text.
+
+Examples:
+"pdf files" -> type:pdf
+"large zip files" -> type:zip size>100mb
+"screenshots from last week" -> type:png age<7d
+"tax documents" -> tax documents"#;
 
 /// The result of trying to translate one natural-language request.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -96,15 +102,76 @@ fn is_category_confused_with_extension(filter: &Filter) -> bool {
 }
 
 /// Strips the kind of wrapping a chat model adds even when told not to:
-/// surrounding quotes, a trailing period, code-fence backticks.
+/// surrounding quotes, a trailing period, code-fence backticks, and stray
+/// commas between filters (observed directly from a real local model: it
+/// wrote `type:zip, size>10kb` with a comma-space separator instead of just
+/// a space; `type:zip,` then parses "successfully" as the literal, never-
+/// matching extension `"zip,"` rather than erroring, so this has to be
+/// cleaned up before parsing, not caught by parse failure afterward).
 fn clean(raw: &str) -> String {
-    raw.trim()
-        .trim_matches('`')
-        .trim()
-        .trim_matches('"')
-        .trim()
-        .trim_end_matches('.')
-        .to_string()
+    let trimmed = strip_backtick_fence(raw.trim()).trim();
+    let unwrapped = strip_full_wrap(trimmed, '"');
+    let no_commas = strip_unquoted_commas(unwrapped.trim_end_matches('.').trim());
+    collapse_spaces(&no_commas).trim().to_string()
+}
+
+fn strip_backtick_fence(s: &str) -> &str {
+    strip_full_wrap(s, '`')
+}
+
+/// Removes `wrap` from both ends only when the WHOLE string is wrapped in a
+/// matching pair (starts and ends with it), not whenever either end happens
+/// to contain the character. A response like `"Smith, John" type:pdf` starts
+/// with `"` but is not fully wrapped (it ends with `pdf`), so this must not
+/// touch it the way `str::trim_matches` would (which strips each end
+/// independently and would break the quoted phrase's pairing).
+fn strip_full_wrap(s: &str, wrap: char) -> &str {
+    let starts = s.starts_with(wrap);
+    let ends = s.ends_with(wrap);
+    if starts && ends && s.chars().count() >= 2 {
+        let start = wrap.len_utf8();
+        &s[start..s.len() - wrap.len_utf8()]
+    } else {
+        s
+    }
+}
+
+/// Replaces `,` with a space, except inside a `"..."` quoted phrase, where a
+/// comma is part of the literal text the user is searching for.
+fn strip_unquoted_commas(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut in_quotes = false;
+    for c in s.chars() {
+        match c {
+            '"' => {
+                in_quotes = !in_quotes;
+                out.push(c);
+            }
+            ',' if !in_quotes => out.push(' '),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
+/// Collapses runs of the plain space character down to one, so a comma
+/// immediately followed by a space (the common real pattern) does not leave
+/// a double space behind once the comma itself becomes a space.
+fn collapse_spaces(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut last_was_space = false;
+    for c in s.chars() {
+        if c == ' ' {
+            if !last_was_space {
+                out.push(' ');
+            }
+            last_was_space = true;
+        } else {
+            out.push(c);
+            last_was_space = false;
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -199,6 +266,32 @@ mod tests {
         };
         let result = translate(&provider, "pdfs");
         assert_eq!(result.query_text, "type:pdf");
+        assert!(!result.used_fallback);
+    }
+
+    #[test]
+    fn comma_separated_filters_from_a_real_model_are_cleaned_up() {
+        // Observed directly from a real local model (llama3.2:1b) during
+        // manual verification: it wrote "type:zip, size>10kb" with a
+        // comma-space separator. Without stripping it, "type:zip," parses
+        // "successfully" as the literal, never-matching extension "zip,"
+        // rather than failing, so this would have silently shipped a broken
+        // filter as if it were a valid one.
+        let provider = FakeChat {
+            response: Ok("type:zip, size>10mb".to_string()),
+        };
+        let result = translate(&provider, "large zip files");
+        assert_eq!(result.query_text, "type:zip size>10mb");
+        assert!(!result.used_fallback);
+    }
+
+    #[test]
+    fn comma_inside_a_quoted_phrase_is_preserved() {
+        let provider = FakeChat {
+            response: Ok("\"Smith, John\" type:pdf".to_string()),
+        };
+        let result = translate(&provider, "pdfs named Smith, John");
+        assert_eq!(result.query_text, "\"Smith, John\" type:pdf");
         assert!(!result.used_fallback);
     }
 

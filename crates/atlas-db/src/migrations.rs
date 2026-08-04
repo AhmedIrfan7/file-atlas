@@ -55,6 +55,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "timeline_index",
         sql: include_str!("../migrations/0004_timeline_index.sql"),
     },
+    Migration {
+        version: 5,
+        name: "ai",
+        sql: include_str!("../migrations/0005_ai.sql"),
+    },
 ];
 
 /// Apply every pending migration to the given connection. Idempotent.

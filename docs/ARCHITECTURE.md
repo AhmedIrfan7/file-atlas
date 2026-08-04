@@ -192,6 +192,17 @@ SQLite is the source of truth for the index. Design notes:
 - Human-readable logs in dev builds.
 - No file content ever logged. Only paths, sizes, categories, error kinds.
 
+## Release and update pipeline
+
+Added in M10. Two separate GitHub Actions workflows, deliberately not one:
+
+- `build.yml` runs on every push/PR to `main`, builds the Tauri bundle on all three OSes, and stops there. No secrets, no publishing; it only answers "does this still build."
+- `release.yml` runs only on a `v*` tag push (or manual dispatch), builds and signs installers on all three OSes via `tauri-apps/tauri-action`, and publishes a **draft** GitHub Release with the updater's `latest.json` manifest attached. It stays a draft until a human reviews and publishes it, the same "hard-to-reverse action needs an explicit human step" treatment given to trash/restore confirmations elsewhere in the app.
+
+The desktop app itself checks `latest.json` on launch via `tauri-plugin-updater` (`apps/desktop/src/components/UpdateChecker.tsx`). Update payloads are signed with a minisign keypair generated once via `tauri signer generate --ci`; the public key is embedded in `tauri.conf.json`, the private key exists only as the `TAURI_SIGNING_PRIVATE_KEY` GitHub Actions secret. This signature proves an update came from this project's CI and was not tampered with; it is a separate concern from OS-level code-signing (Authenticode, Apple notarization), which needs a paid certificate and identity verification and is deferred (see ADR 0012). The app version shown in the UI comes from `package.json` via a Vite `define`, so it can never drift from what was actually built.
+
+`landing/` is a small static HTML/CSS site (no framework, no build step), deployed to GitHub Pages by `pages.yml` whenever it changes. It reuses the desktop app's own color tokens (`apps/desktop/src/styles.css`) rather than a separate design system.
+
 ## Extension points (later milestones)
 
 - **AI layer** as a separate crate with a trait for LLM providers. Local embedding by default. Cloud provider is opt-in and clearly labeled.

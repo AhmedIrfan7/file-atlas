@@ -35,16 +35,16 @@ const CATEGORY_NAMES_NOT_EXTENSIONS: &[&str] = &[
     "other",
 ];
 
-const SYSTEM_PROMPT: &str = r#"You translate a person's plain-English file search request into a compact filter query. Reply with ONLY the query string: no explanation, no markdown formatting, no surrounding quotes.
+const SYSTEM_PROMPT: &str = r#"You translate a person's plain-English file search request into a compact filter query. Reply with ONLY the query string on a single line: no explanation, no markdown formatting, no surrounding quotes, and never repeat any part of these instructions back.
 
 Grammar you may use, space-separated, in any combination:
-- type:<extension>  file extension without a dot, e.g. type:pdf, type:jpg, type:zip, type:docx (never a category name like "Document")
-- in:<substring>    restricts to files whose folder path contains this text
-- size>N, size<N, size>=N, size<=N   N is a number plus a unit: b, kb, mb, gb, tb (e.g. size>10mb)
-- age>N, age<N, age>=N, age<=N       N is a number plus a unit: d, w, m, y (e.g. age<1y means modified within the last year)
+- type:<extension>  file extension without a dot, glued directly to "type:" with no space, e.g. type:pdf, type:jpg, type:zip, type:docx (never a category name like "Document", never left empty)
+- in:<substring>    restricts to files whose folder path contains this text, glued directly to "in:" with no space
+- size>N, size<N, size>=N, size<=N   glued together with no spaces anywhere in the token; N is a positive number plus a unit: b, kb, mb, gb, tb (e.g. size>10mb)
+- age>N, age<N, age>=N, age<=N       glued together with no spaces anywhere in the token; N is a positive number plus a unit: d, w, m, y (e.g. age<1y means modified within the last year); never negative
 - any other words are free text, matched against file name and path; wrap a phrase that must stay together in double quotes
 
-Only include a filter the request specifically implies. Do not add an age, folder, or size filter just because one could apply; an unrequested filter narrows the search and hides files the person actually wants to see. If the request has no filterable structure at all, reply with it as plain free text.
+Only include a filter the request specifically implies. Do not add an age, folder, or size filter just because one could apply; an unrequested filter narrows the search and hides files the person actually wants to see. If the request has no filterable structure at all, reply with it as plain free text. If no filter in this grammar applies to a word in the request (for example "folders", which this grammar has no filter for), leave that word out rather than inventing an unrelated filter for it.
 
 Examples:
 "pdf files" -> type:pdf
@@ -84,11 +84,19 @@ pub fn translate(provider: &dyn ChatProvider, natural_language: &str) -> Transla
     let Ok(parsed) = atlas_search::parser::parse(&candidate) else {
         return fallback();
     };
-    if parsed
-        .filters
-        .iter()
-        .any(is_category_confused_with_extension)
-    {
+    if parsed.filters.iter().any(is_filter_semantically_useless) {
+        return fallback();
+    }
+    // A genuine translation is short: a handful of filter tokens plus at most
+    // a few free-text words. A small local model that cannot translate a
+    // request sometimes rambles instead, or echoes part of its own system
+    // prompt back (observed directly: a real response ended with "...any
+    // other words are free text wrapped in double quotes: \"screenshots from
+    // last week\"", a fragment lifted straight from this module's own
+    // SYSTEM_PROMPT). None of that fails to parse, since anything not
+    // recognized as a filter is deliberately accepted as free text, so it
+    // has to be caught here instead of as a parse error.
+    if free_text_word_count(&parsed) > MAX_FREE_TEXT_WORDS {
         return fallback();
     }
     TranslatedQuery {
@@ -97,8 +105,29 @@ pub fn translate(provider: &dyn ChatProvider, natural_language: &str) -> Transla
     }
 }
 
-fn is_category_confused_with_extension(filter: &Filter) -> bool {
-    matches!(filter, Filter::Extension(ext) if CATEGORY_NAMES_NOT_EXTENSIONS.contains(&ext.as_str()))
+const MAX_FREE_TEXT_WORDS: usize = 10;
+
+fn free_text_word_count(query: &atlas_search::parser::SearchQuery) -> usize {
+    query
+        .text
+        .as_deref()
+        .map_or(0, |t| t.split_whitespace().count())
+}
+
+/// A filter that parses successfully but can never match a real file: an
+/// extension that is actually a category name (`type:` compares against
+/// extension, not category), or an extension/folder filter left empty
+/// because the model glued a space after the prefix (`type: zip`, `in: `)
+/// instead of directly against it, which the parser happily accepts as an
+/// empty-string filter rather than an error.
+fn is_filter_semantically_useless(filter: &Filter) -> bool {
+    match filter {
+        Filter::Extension(ext) => {
+            ext.is_empty() || CATEGORY_NAMES_NOT_EXTENSIONS.contains(&ext.as_str())
+        }
+        Filter::InFolder(sub) => sub.is_empty(),
+        Filter::Size { .. } | Filter::Age { .. } => false,
+    }
 }
 
 /// Strips the kind of wrapping a chat model adds even when told not to:
@@ -109,7 +138,12 @@ fn is_category_confused_with_extension(filter: &Filter) -> bool {
 /// matching extension `"zip,"` rather than erroring, so this has to be
 /// cleaned up before parsing, not caught by parse failure afterward).
 fn clean(raw: &str) -> String {
-    let trimmed = strip_backtick_fence(raw.trim()).trim();
+    // A well-formed reply is one line; a model that ignores the
+    // one-line-only instruction and appends an explanation or trails off
+    // into commentary puts that on later lines, which this drops rather
+    // than folding into the query.
+    let first_line = raw.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+    let trimmed = strip_backtick_fence(first_line.trim()).trim();
     let unwrapped = strip_full_wrap(trimmed, '"');
     let no_commas = strip_unquoted_commas(unwrapped.trim_end_matches('.').trim());
     collapse_spaces(&no_commas).trim().to_string()
@@ -260,6 +294,52 @@ mod tests {
     }
 
     #[test]
+    fn leaked_prompt_instructions_fall_back_to_free_text() {
+        // Observed directly from a real local model (llama3.2:1b): asked to
+        // translate "large folders more than 50 gbs", it produced valid
+        // filters followed by a fragment of this module's own SYSTEM_PROMPT
+        // ("...any other words are free text wrapped in double quotes:
+        // \"screenshots from last week\""), which is itself one of the
+        // prompt's own examples. This parses fine (anything not a recognized
+        // filter is deliberately accepted as free text), so only the
+        // free-text length cap catches it.
+        let provider = FakeChat {
+            response: Ok(
+                "type:zip size>50gb any other words are free text wrapped in double quotes here"
+                    .to_string(),
+            ),
+        };
+        let result = translate(&provider, "large folders more than 50 gbs");
+        assert_eq!(result.query_text, "large folders more than 50 gbs");
+        assert!(result.used_fallback);
+    }
+
+    #[test]
+    fn commentary_on_a_second_line_is_dropped_not_folded_in() {
+        let provider = FakeChat {
+            response: Ok(
+                "type:pdf\nHope that helps! Let me know if you want more filters.".to_string(),
+            ),
+        };
+        let result = translate(&provider, "pdfs");
+        assert_eq!(result.query_text, "type:pdf");
+        assert!(!result.used_fallback);
+    }
+
+    #[test]
+    fn empty_extension_from_a_stray_space_after_the_colon_is_rejected() {
+        // "type: zip" (space after the colon) tokenizes as "type:" (an empty
+        // extension) and a separate free-text word "zip", not as the
+        // extension filter the model presumably meant.
+        let provider = FakeChat {
+            response: Ok("type: zip".to_string()),
+        };
+        let result = translate(&provider, "zip files");
+        assert_eq!(result.query_text, "zip files");
+        assert!(result.used_fallback);
+    }
+
+    #[test]
     fn real_extension_that_happens_to_share_no_category_name_is_accepted() {
         let provider = FakeChat {
             response: Ok("type:pdf".to_string()),
@@ -343,5 +423,40 @@ mod tests {
             mentions_pdf,
             "expected \"pdf\" to survive somewhere in the translation, got: {parsed:?}"
         );
+    }
+
+    // Reproduces a real bug report against the real model: asked to
+    // translate "large folders more than 50 gbs", llama3.2:1b produced valid
+    // filters followed by a chunk of this module's own SYSTEM_PROMPT text.
+    // There is no folder-size filter in the grammar at all (Storage Map, not
+    // Search, owns that concept), so the only two safe outcomes here are a
+    // real, meaningful filter query or a clean fallback to free text; a
+    // leaked-instructions query text is neither and must never come back.
+    #[test]
+    #[ignore = "requires llama3.2:1b pulled locally"]
+    fn real_local_model_never_leaks_prompt_text_for_an_unsupported_query() {
+        let provider =
+            crate::ollama::OllamaProvider::local_default(Some("llama3.2:1b".to_string()));
+        let result = translate(&provider, "large folders more than 50 gbs");
+        println!(
+            "used_fallback={} query_text={:?}",
+            result.used_fallback, result.query_text
+        );
+        let suspicious = ["free text", "wrapped in", "double quotes", "system prompt"];
+        for phrase in suspicious {
+            assert!(
+                !result.query_text.to_lowercase().contains(phrase),
+                "translation leaked prompt text ({phrase:?}): {}",
+                result.query_text
+            );
+        }
+        if !result.used_fallback {
+            let parsed =
+                atlas_search::parser::parse(&result.query_text).expect("must be parseable");
+            assert!(
+                !parsed.filters.iter().any(is_filter_semantically_useless),
+                "translation produced a semantically useless filter: {parsed:?}"
+            );
+        }
     }
 }

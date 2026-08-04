@@ -28,11 +28,14 @@ export default function TimelineView() {
   }, [view]);
 
   useEffect(() => {
-    Promise.all([getScreenshotBursts(), getProjectBursts()])
+    // Bursts used to always query all-time regardless of the view selector
+    // above: switching to "This week" changed the histogram but silently
+    // left the burst cards showing old, unrelated data from months back.
+    Promise.all([getScreenshotBursts(view.sinceDays), getProjectBursts(view.sinceDays)])
       .then(([screenshots, projects]) => setBursts(screenshots, projects))
       .catch((err: unknown) => setError(String(err)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [view]);
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-4xl mx-auto">

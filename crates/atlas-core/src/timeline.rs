@@ -141,6 +141,7 @@ pub fn screenshot_bursts(
     conn: &Connection,
     min_count: u32,
     sample_limit: u32,
+    since_unix: Option<i64>,
 ) -> rusqlite::Result<Vec<Burst>> {
     let bucket_sql = format!(
         "SELECT CAST(strftime('%s', created_at, 'unixepoch', 'start of day') AS INTEGER) AS bucket,
@@ -148,13 +149,14 @@ pub fn screenshot_bursts(
          FROM files
          WHERE is_dir = 0 AND removed_at IS NULL AND created_at IS NOT NULL
            AND category = 'Image' AND ({SCREENSHOT_NAME_PATTERNS})
+           AND (?2 IS NULL OR created_at >= ?2)
          GROUP BY bucket
          HAVING COUNT(*) >= ?1
          ORDER BY bucket DESC"
     );
     let mut bucket_stmt = conn.prepare(&bucket_sql)?;
     let buckets: Vec<(i64, i64, i64)> = bucket_stmt
-        .query_map(rusqlite::params![min_count], |r| {
+        .query_map(rusqlite::params![min_count, since_unix], |r| {
             Ok((r.get(0)?, r.get(1)?, r.get(2)?))
         })?
         .collect::<rusqlite::Result<Vec<_>>>()?;
@@ -199,6 +201,7 @@ pub fn project_bursts(
     conn: &Connection,
     min_count: u32,
     sample_limit: u32,
+    since_unix: Option<i64>,
 ) -> rusqlite::Result<Vec<Burst>> {
     let mut bucket_stmt = conn.prepare(
         "SELECT parent,
@@ -206,12 +209,13 @@ pub fn project_bursts(
                 COUNT(*), COALESCE(SUM(size_bytes), 0)
          FROM files
          WHERE is_dir = 0 AND removed_at IS NULL AND created_at IS NOT NULL
+           AND (?2 IS NULL OR created_at >= ?2)
          GROUP BY parent, bucket
          HAVING COUNT(*) >= ?1
          ORDER BY COUNT(*) DESC",
     )?;
     let groups: Vec<(String, i64, i64, i64)> = bucket_stmt
-        .query_map(rusqlite::params![min_count], |r| {
+        .query_map(rusqlite::params![min_count, since_unix], |r| {
             Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?))
         })?
         .collect::<rusqlite::Result<Vec<_>>>()?;
@@ -479,14 +483,24 @@ mod tests {
             "Document",
         );
 
-        let bursts = screenshot_bursts(&conn, 5, 10).unwrap();
+        let bursts = screenshot_bursts(&conn, 5, 10, None).unwrap();
         assert_eq!(bursts.len(), 1);
         assert_eq!(bursts[0].file_count, 5);
         assert_eq!(bursts[0].folder, None);
         assert_eq!(bursts[0].sample.len(), 5);
 
-        let too_strict = screenshot_bursts(&conn, 6, 10).unwrap();
+        let too_strict = screenshot_bursts(&conn, 6, 10, None).unwrap();
         assert!(too_strict.is_empty());
+
+        // A `since_unix` after the burst's own day must exclude it, the same
+        // "changed within" scoping `get_timeline` already applies: a burst
+        // list should shrink to match the selected time window, not silently
+        // ignore it (this was a real bug: the UI's window selector had no
+        // effect on the burst sections at all before this parameter existed).
+        let outside_window = screenshot_bursts(&conn, 5, 10, Some(DAY2)).unwrap();
+        assert!(outside_window.is_empty());
+        let inside_window = screenshot_bursts(&conn, 5, 10, Some(DAY1)).unwrap();
+        assert_eq!(inside_window.len(), 1);
     }
 
     #[test]
@@ -524,9 +538,13 @@ mod tests {
             "Code",
         );
 
-        let bursts = project_bursts(&conn, 4, 10).unwrap();
+        let bursts = project_bursts(&conn, 4, 10, None).unwrap();
         assert_eq!(bursts.len(), 1);
         assert_eq!(bursts[0].folder.as_deref(), Some("C:\\proj"));
         assert_eq!(bursts[0].file_count, 4);
+
+        // Same "changed within" scoping as screenshot_bursts above.
+        let outside_window = project_bursts(&conn, 4, 10, Some(DAY2)).unwrap();
+        assert!(outside_window.is_empty());
     }
 }

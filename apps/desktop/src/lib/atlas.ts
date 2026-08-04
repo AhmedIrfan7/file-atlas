@@ -122,12 +122,12 @@ export function getLifeTimeline(
   return invoke("get_life_timeline", { granularity, sinceDays });
 }
 
-export function getScreenshotBursts(): Promise<Burst[]> {
-  return invoke("get_screenshot_bursts");
+export function getScreenshotBursts(sinceDays: number | null): Promise<Burst[]> {
+  return invoke("get_screenshot_bursts", { sinceDays });
 }
 
-export function getProjectBursts(): Promise<Burst[]> {
-  return invoke("get_project_bursts");
+export function getProjectBursts(sinceDays: number | null): Promise<Burst[]> {
+  return invoke("get_project_bursts", { sinceDays });
 }
 
 export function openInFileManager(path: string): Promise<void> {

@@ -168,3 +168,47 @@ export interface ScanFinishedEvent {
   total_errors: number;
   cancelled: boolean;
 }
+
+export interface AiStatus {
+  ollama_available: boolean;
+  installed_models: string[];
+  embedding_model: string;
+  embedding_model_installed: boolean;
+  chat_model: string | null;
+  chat_model_installed: boolean;
+  files_embedded: number;
+  files_pending: number;
+  cloud_enabled: boolean;
+}
+
+export interface AiSettings {
+  cloud_enabled: boolean;
+  cloud_base_url: string | null;
+  cloud_model: string | null;
+  cloud_api_key: string | null;
+  chat_model: string | null;
+}
+
+export interface SimilarFile {
+  path: string;
+  name: string;
+  size_bytes: number;
+  modified_at: number | null;
+  category: string | null;
+  score: number;
+}
+
+export interface TranslatedQuery {
+  query_text: string;
+  used_fallback: boolean;
+}
+
+export interface EmbedProgressEvent {
+  files_embedded: number;
+  files_total: number;
+}
+
+export interface EmbedFinishedEvent {
+  files_embedded: number;
+  errors: number;
+}

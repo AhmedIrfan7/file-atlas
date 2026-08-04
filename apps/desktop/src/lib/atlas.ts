@@ -8,6 +8,8 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type {
   ActionRow,
+  AiSettings,
+  AiStatus,
   Burst,
   DuplicateGroup,
   FileSummary,
@@ -17,10 +19,12 @@ import type {
   RestoreOutcome,
   SavedSearch,
   SearchHit,
+  SimilarFile,
   StaleBucket,
   StorageMapResponse,
   SuggestedRoot,
   TimelineResponse,
+  TranslatedQuery,
   TrashOutcome,
 } from "../types";
 
@@ -128,4 +132,35 @@ export function getProjectBursts(): Promise<Burst[]> {
 
 export function openInFileManager(path: string): Promise<void> {
   return invoke("open_in_file_manager", { path });
+}
+
+export function getAiStatus(): Promise<AiStatus> {
+  return invoke("get_ai_status");
+}
+
+export function getAiSettings(): Promise<AiSettings> {
+  return invoke("get_ai_settings");
+}
+
+export function setAiSettings(settings: AiSettings): Promise<void> {
+  return invoke("set_ai_settings", { settings });
+}
+
+export function buildSearchIndex(): Promise<void> {
+  return invoke("build_search_index");
+}
+
+export function cancelSearchIndex(): Promise<void> {
+  return invoke("cancel_search_index");
+}
+
+export function semanticSearchFiles(query: string, limit: number): Promise<SimilarFile[]> {
+  return invoke("semantic_search_files", { query, limit });
+}
+
+export function translateNaturalLanguageQuery(
+  query: string,
+  useCloud: boolean,
+): Promise<TranslatedQuery> {
+  return invoke("translate_natural_language_query", { query, useCloud });
 }

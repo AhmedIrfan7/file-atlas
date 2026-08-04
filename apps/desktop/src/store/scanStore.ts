@@ -9,7 +9,8 @@ export type ScreenState =
   | "duplicates"
   | "cleanup"
   | "storage"
-  | "timeline";
+  | "timeline"
+  | "ai";
 
 interface ScanProgressState {
   currentRoot: string | null;

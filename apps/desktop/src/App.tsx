@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 
+import AiSearchView from "./components/AiSearchView";
 import CleanupView from "./components/CleanupView";
 import DuplicatesView from "./components/DuplicatesView";
 import HomeView from "./components/HomeView";
@@ -10,10 +11,13 @@ import ScanningView from "./components/ScanningView";
 import SearchView from "./components/SearchView";
 import StorageMapView from "./components/StorageMapView";
 import TimelineView from "./components/TimelineView";
-import { getHomeSummary } from "./lib/atlas";
+import { getAiStatus, getHomeSummary } from "./lib/atlas";
+import { useAiStore } from "./store/aiStore";
 import { useDuplicatesStore } from "./store/duplicatesStore";
 import { useScanStore } from "./store/scanStore";
 import type {
+  EmbedFinishedEvent,
+  EmbedProgressEvent,
   HashFinishedEvent,
   HashProgressEvent,
   ScanFinishedEvent,
@@ -27,6 +31,8 @@ export default function App() {
   const lastError = useScanStore((s) => s.lastError);
   const setHashing = useDuplicatesStore((s) => s.setHashing);
   const setHashProgress = useDuplicatesStore((s) => s.setHashProgress);
+  const setEmbedProgress = useAiStore((s) => s.setEmbedProgress);
+  const setAiStatus = useAiStore((s) => s.setStatus);
 
   useEffect(() => {
     getHomeSummary()
@@ -71,6 +77,25 @@ export default function App() {
     };
   }, [setHashing, setHashProgress]);
 
+  useEffect(() => {
+    const unlistenEmbedProgress = listen<EmbedProgressEvent>("embed-progress", (event) => {
+      setEmbedProgress({
+        filesEmbedded: event.payload.files_embedded,
+        filesTotal: event.payload.files_total,
+      });
+    });
+    const unlistenEmbedFinished = listen<EmbedFinishedEvent>("embed-finished", () => {
+      setEmbedProgress(null);
+      getAiStatus()
+        .then(setAiStatus)
+        .catch(() => undefined);
+    });
+    return () => {
+      void unlistenEmbedProgress.then((f) => f());
+      void unlistenEmbedFinished.then((f) => f());
+    };
+  }, [setEmbedProgress, setAiStatus]);
+
   return (
     <>
       {lastError && (
@@ -90,7 +115,8 @@ export default function App() {
         screen === "duplicates" ||
         screen === "cleanup" ||
         screen === "storage" ||
-        screen === "timeline") && (
+        screen === "timeline" ||
+        screen === "ai") && (
         <>
           <NavBar />
           {screen === "home" && <HomeView />}
@@ -99,6 +125,7 @@ export default function App() {
           {screen === "cleanup" && <CleanupView />}
           {screen === "storage" && <StorageMapView />}
           {screen === "timeline" && <TimelineView />}
+          {screen === "ai" && <AiSearchView />}
         </>
       )}
     </>

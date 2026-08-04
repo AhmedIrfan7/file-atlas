@@ -2,9 +2,9 @@ const CATEGORIES = ["Image", "Video", "Audio", "Document", "Archive", "Installer
 
 const TIME_WINDOWS: { label: string; days: number | null }[] = [
   { label: "All time", days: null },
-  { label: "7 days", days: 7 },
-  { label: "30 days", days: 30 },
-  { label: "1 year", days: 365 },
+  { label: "Last 7 days", days: 7 },
+  { label: "Last 30 days", days: 30 },
+  { label: "Last year", days: 365 },
 ];
 
 interface Props {
@@ -35,6 +35,7 @@ export default function StorageFilters({
         ))}
       </select>
 
+      <span className="text-xs text-[color:var(--color-atlas-muted)]">Changed within:</span>
       <div className="flex items-center gap-1 rounded-lg border border-[color:var(--color-atlas-border)] p-1">
         {TIME_WINDOWS.map((tw) => (
           <button

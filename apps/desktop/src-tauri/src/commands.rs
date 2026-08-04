@@ -146,7 +146,20 @@ fn scan_one_root(
         })?
     };
 
-    scan_handle.join().expect("scanner thread panicked");
+    // A panic here must become a returned `Err`, not propagate: the caller
+    // (`start_scan`'s loop) only reaches `running.store(false)` and emits
+    // `scan-finished` after every root returns, panic or not. Re-panicking
+    // via `.expect()` would unwind straight through that loop, leaving
+    // `scan_running` stuck `true` forever and the UI stuck on "Mapping your
+    // files" with no way to start another scan.
+    if let Err(panic) = scan_handle.join() {
+        let message = panic
+            .downcast_ref::<&str>()
+            .map(|s| (*s).to_string())
+            .or_else(|| panic.downcast_ref::<String>().cloned())
+            .unwrap_or_else(|| "scanner thread panicked".to_string());
+        anyhow::bail!(message);
+    }
     Ok(index_stats)
 }
 

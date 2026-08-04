@@ -51,7 +51,7 @@ tokio-util = { version = "0.7", features = ["rt"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 parking_lot = "0.12"
-rusqlite = { version = "0.32", features = ["bundled", "backup", "chrono", "serde_json"] }
+rusqlite = { version = "0.40", features = ["bundled", "backup", "chrono", "serde_json"] }
 walkdir = "2"
 ignore = "0.4"
 blake3 = "1"

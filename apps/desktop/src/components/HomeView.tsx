@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getHomeSummary, getStaleBucket, getTopLargest, getTopOldest } from "../lib/atlas";
 import { formatBytes } from "../lib/format";
@@ -17,11 +17,20 @@ export default function HomeView() {
   const [oldest, setOldest] = useState<FileSummary[]>([]);
   const [stale, setStale] = useState<StaleBucket | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const setScreen = useScanStore((s) => s.setScreen);
   const setError = useScanStore((s) => s.setError);
+  const loadGeneration = useRef(0);
 
-  useEffect(() => {
-    let cancelled = false;
+  // Does not reset `loading`/`loadError` itself: the initial render already
+  // starts in that state, and the retry button resets it explicitly before
+  // calling this, since doing it here would mean a plain useState setter
+  // gets called synchronously from inside the mount effect below (flagged
+  // by react-hooks/set-state-in-effect; the same pattern elsewhere in this
+  // codebase only avoids it because those views' loading/error state lives
+  // in a Zustand store instead of a local useState).
+  function load() {
+    const generation = ++loadGeneration.current;
     Promise.all([
       getHomeSummary(),
       getTopLargest(TOP_N),
@@ -29,20 +38,47 @@ export default function HomeView() {
       getStaleBucket(STALE_MIN_AGE_DAYS, 5),
     ])
       .then(([s, l, o, st]) => {
-        if (cancelled) return;
+        if (generation !== loadGeneration.current) return;
         setSummary(s);
         setLargest(l);
         setOldest(o);
         setStale(st);
       })
-      .catch((err: unknown) => setError(String(err)))
+      .catch((err: unknown) => {
+        if (generation !== loadGeneration.current) return;
+        setLoadError(String(err));
+        setError(String(err));
+      })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (generation === loadGeneration.current) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [setError]);
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (loadError) {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-sm text-[color:var(--color-atlas-muted)]">
+          Couldn&rsquo;t load your file map.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            setLoadError(null);
+            load();
+          }}
+          className="rounded-lg border border-[color:var(--color-atlas-border)] px-4 py-2 text-sm text-[color:var(--color-atlas-fg)] hover:border-[color:var(--color-atlas-accent)] transition-colors"
+        >
+          Try again
+        </button>
+      </main>
+    );
+  }
 
   if (loading || !summary) {
     return (

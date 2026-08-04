@@ -23,6 +23,7 @@ export default function SearchView() {
 
   const [savingName, setSavingName] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
 
   const refreshSavedSearches = () => {
     listSavedSearches()
@@ -42,11 +43,21 @@ export default function SearchView() {
       return;
     }
     debounceRef.current = setTimeout(() => {
+      const requestId = ++requestIdRef.current;
       setLoading(true);
       searchFiles(queryText, RESULT_LIMIT)
-        .then(setResults)
-        .catch((err: unknown) => setError(String(err)))
-        .finally(() => setLoading(false));
+        .then((hits) => {
+          // A slower, older request can resolve after a newer one if the
+          // user kept typing past the debounce window; only the latest
+          // request's results should ever be allowed to win.
+          if (requestId === requestIdRef.current) setResults(hits);
+        })
+        .catch((err: unknown) => {
+          if (requestId === requestIdRef.current) setError(String(err));
+        })
+        .finally(() => {
+          if (requestId === requestIdRef.current) setLoading(false);
+        });
     }, DEBOUNCE_MS);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);

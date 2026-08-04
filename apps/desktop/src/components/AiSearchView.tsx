@@ -17,6 +17,7 @@ import SemanticResultsList from "./SemanticResultsList";
 export default function AiSearchView() {
   const settings = useAiStore((s) => s.settings);
   const mode = useAiStore((s) => s.mode);
+  const status = useAiStore((s) => s.status);
   const query = useAiStore((s) => s.query);
   const translatedQueryText = useAiStore((s) => s.translatedQueryText);
   const usedFallback = useAiStore((s) => s.usedFallback);
@@ -158,7 +159,10 @@ export default function AiSearchView() {
         (mode === "translate" ? (
           <SearchResultsList results={filterResults} loading={loading} hasQuery />
         ) : (
-          <SemanticResultsList results={semanticResults} />
+          <SemanticResultsList
+            results={semanticResults}
+            hasIndex={(status?.files_embedded ?? 0) > 0}
+          />
         ))}
 
       {pendingCloudConfirm && (

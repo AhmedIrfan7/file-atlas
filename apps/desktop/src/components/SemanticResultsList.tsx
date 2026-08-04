@@ -4,14 +4,16 @@ import type { SimilarFile } from "../types";
 
 interface Props {
   results: SimilarFile[];
+  hasIndex: boolean;
 }
 
-export default function SemanticResultsList({ results }: Props) {
+export default function SemanticResultsList({ results, hasIndex }: Props) {
   if (results.length === 0) {
     return (
       <p className="text-sm text-[color:var(--color-atlas-muted)]">
-        No matches yet. Build the search index above, then try a description of what you&apos;re
-        looking for.
+        {hasIndex
+          ? "No matches. Try describing it differently."
+          : "No matches yet. Build the search index above, then try a description of what you're looking for."}
       </p>
     );
   }

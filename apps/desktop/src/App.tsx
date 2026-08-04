@@ -29,6 +29,7 @@ export default function App() {
   const setScreen = useScanStore((s) => s.setScreen);
   const setProgress = useScanStore((s) => s.setProgress);
   const lastError = useScanStore((s) => s.lastError);
+  const setError = useScanStore((s) => s.setError);
   const setHashing = useDuplicatesStore((s) => s.setHashing);
   const setHashProgress = useDuplicatesStore((s) => s.setHashProgress);
   const setEmbedProgress = useAiStore((s) => s.setEmbedProgress);
@@ -99,8 +100,16 @@ export default function App() {
   return (
     <>
       {lastError && (
-        <div className="fixed top-0 inset-x-0 z-50 bg-red-500/10 border-b border-red-500/30 text-red-300 text-sm px-6 py-2 text-center">
-          {lastError}
+        <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-center gap-4 bg-red-500/10 border-b border-red-500/30 text-red-300 text-sm px-6 py-2">
+          <span>{lastError}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            aria-label="Dismiss error"
+            className="shrink-0 text-red-300/70 hover:text-red-300"
+          >
+            &times;
+          </button>
         </div>
       )}
       {screen === "loading" && (

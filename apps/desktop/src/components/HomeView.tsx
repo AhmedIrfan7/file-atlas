@@ -43,6 +43,9 @@ export default function HomeView() {
         setLargest(l);
         setOldest(o);
         setStale(st);
+        // A successful retry should clear a stale error from an earlier
+        // failed attempt, not leave the (now resolved) global banner up.
+        setError(null);
       })
       .catch((err: unknown) => {
         if (generation !== loadGeneration.current) return;

@@ -16,14 +16,22 @@ use serde::{Deserialize, Serialize};
 
 use crate::provider::ChatProvider;
 
-/// Category names the classifier assigns (`atlas_core::classifier::Category`),
-/// as opposed to file extensions. An LLM asked to translate "documents" or
-/// "images" quite naturally reaches for `type:document`/`type:image`, which
-/// parses as a syntactically valid `type:` filter but can never match a real
-/// file: `type:` compares against extension, not category, and no file has
-/// the literal extension "document". Caught by reasoning through what the
-/// syntactic parser cannot know, then confirmed as a real failure mode by
-/// `hallucinated_category_name_is_rejected` below.
+/// Words that can never be a genuine file extension, as opposed to what an
+/// LLM sometimes reaches for anyway. Two distinct sources feed this list:
+///
+/// - Classifier category names (`atlas_core::classifier::Category`): asked to
+///   translate "documents" or "images", a model quite naturally produces
+///   `type:document`/`type:image`, which parses as a syntactically valid
+///   `type:` filter but can never match a real file, since `type:` compares
+///   against extension, not category. Confirmed as a real failure mode by
+///   `hallucinated_category_name_is_rejected` below.
+/// - Structural nouns from the request itself ("folder(s)", "file(s)"): a
+///   request like "large folders where size > 50 mb" has no extension to
+///   translate at all (there is no folder-size filter in this grammar), and
+///   a small model asked anyway sometimes uses the noun itself as the
+///   extension (`type:folders`) rather than recognizing there is nothing to
+///   fill that slot with. Observed directly from llama3.2:1b; see
+///   `real_local_model_does_not_invent_a_type_filter_for_folders`.
 const CATEGORY_NAMES_NOT_EXTENSIONS: &[&str] = &[
     "image",
     "video",
@@ -33,6 +41,10 @@ const CATEGORY_NAMES_NOT_EXTENSIONS: &[&str] = &[
     "installer",
     "code",
     "other",
+    "folder",
+    "folders",
+    "file",
+    "files",
 ];
 
 const SYSTEM_PROMPT: &str = r#"You translate a person's plain-English file search request into a compact filter query. Reply with ONLY the query string on a single line: no explanation, no markdown formatting, no surrounding quotes, and never repeat any part of these instructions back.
@@ -49,6 +61,7 @@ Only include a filter the request specifically implies. Do not add an age, folde
 Examples:
 "pdf files" -> type:pdf
 "large zip files" -> type:zip size>100mb
+"large folders" -> size>100mb
 "screenshots from last week" -> type:png age<7d
 "tax documents" -> tax documents"#;
 
@@ -116,16 +129,19 @@ fn free_text_word_count(query: &atlas_search::parser::SearchQuery) -> usize {
 
 /// A filter that parses successfully but can never match a real file: an
 /// extension that is actually a category name (`type:` compares against
-/// extension, not category), or an extension/folder filter left empty
-/// because the model glued a space after the prefix (`type: zip`, `in: `)
-/// instead of directly against it, which the parser happily accepts as an
-/// empty-string filter rather than an error.
+/// extension, not category), an extension/folder filter left empty because
+/// the model glued a space after the prefix (`type: zip`, `in: `) instead of
+/// directly against it, or an `in:` substring containing `*`/`?`. This
+/// grammar's `in:` is a plain substring match, not a glob, and `*`/`?` are
+/// reserved characters no real Windows path can ever contain, so a value
+/// like `*folders*` (observed directly from llama3.2:1b, presumably
+/// mimicking shell glob syntax) can never match anything either.
 fn is_filter_semantically_useless(filter: &Filter) -> bool {
     match filter {
         Filter::Extension(ext) => {
             ext.is_empty() || CATEGORY_NAMES_NOT_EXTENSIONS.contains(&ext.as_str())
         }
-        Filter::InFolder(sub) => sub.is_empty(),
+        Filter::InFolder(sub) => sub.is_empty() || sub.contains(['*', '?']),
         Filter::Size { .. } | Filter::Age { .. } => false,
     }
 }
@@ -375,6 +391,20 @@ mod tests {
         assert!(!result.used_fallback);
     }
 
+    #[test]
+    fn glob_wildcard_in_folder_filter_is_rejected() {
+        // Observed directly from llama3.2:1b: "in:*folders*", presumably
+        // mimicking shell glob syntax. This grammar's in: is a plain
+        // substring match, and `*`/`?` are reserved characters no real
+        // Windows path can ever contain, so this can never match anything.
+        let provider = FakeChat {
+            response: Ok("size>=50mb in:*folders*".to_string()),
+        };
+        let result = translate(&provider, "large folders where size > 50 mb");
+        assert_eq!(result.query_text, "large folders where size > 50 mb");
+        assert!(result.used_fallback);
+    }
+
     // Talks to a REAL local Ollama instance running a real chat model, so
     // this is not just testing the fallback/validation logic against a
     // scripted fake: it proves an actual small local model's output survives
@@ -458,5 +488,30 @@ mod tests {
                 "translation produced a semantically useless filter: {parsed:?}"
             );
         }
+    }
+
+    // Reproduces a second real bug report, same root cause, different
+    // symptom: the exact phrasing "large folders where size > 50 mb" made
+    // llama3.2:1b invent `type:zip`, presumably pattern-matching against the
+    // "large zip files" -> "type:zip size>100mb" example rather than
+    // reasoning about "folders" specifically. Fixed by adding a directly
+    // relevant demonstrated example ("large folders" -> "size>100mb") rather
+    // than only describing the rule in prose, since a tiny model follows a
+    // shown example far more reliably than an instruction about one.
+    #[test]
+    #[ignore = "requires llama3.2:1b pulled locally"]
+    fn real_local_model_does_not_invent_a_type_filter_for_folders() {
+        let provider =
+            crate::ollama::OllamaProvider::local_default(Some("llama3.2:1b".to_string()));
+        let result = translate(&provider, "large folders where size > 50 mb");
+        println!(
+            "used_fallback={} query_text={:?}",
+            result.used_fallback, result.query_text
+        );
+        assert!(
+            !result.query_text.to_lowercase().contains("type:"),
+            "\"folders\" has no extension to match, so any type: filter here is invented: {}",
+            result.query_text
+        );
     }
 }

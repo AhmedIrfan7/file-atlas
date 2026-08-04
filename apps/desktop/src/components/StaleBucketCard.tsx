@@ -22,14 +22,11 @@ export default function StaleBucketCard({ bucket }: Props) {
           ({formatBytes(bucket.total_bytes)}) have not been touched in over a year.
         </span>
       </p>
-      <ul className="space-y-1">
+      <ul className="space-y-1.5">
         {bucket.sample.slice(0, 5).map((file) => (
-          <li
-            key={file.path}
-            className="text-sm text-[color:var(--color-atlas-muted)] truncate"
-            title={file.path}
-          >
-            {file.name}
+          <li key={file.path} className="min-w-0">
+            <p className="text-sm truncate">{file.name}</p>
+            <p className="text-xs text-[color:var(--color-atlas-muted)] truncate">{file.path}</p>
           </li>
         ))}
       </ul>

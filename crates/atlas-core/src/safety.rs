@@ -164,15 +164,32 @@ fn path_has_prefix(haystack: &str, needle: &str) -> bool {
     if haystack.len() < needle.len() {
         return false;
     }
-    haystack
+    let chars_match = haystack
         .chars()
         .zip(needle.chars())
-        .all(|(a, b)| a.eq_ignore_ascii_case(&b))
+        .all(|(a, b)| a.eq_ignore_ascii_case(&b));
+    chars_match && is_path_boundary(haystack, needle.len())
 }
 
 #[cfg(target_os = "linux")]
 fn path_has_prefix(haystack: &str, needle: &str) -> bool {
-    haystack.starts_with(needle)
+    haystack.starts_with(needle) && is_path_boundary(haystack, needle.len())
+}
+
+/// True when byte offset `len` in `haystack` is a real path-component
+/// boundary: the end of the string, or immediately followed by a path
+/// separator. Every `needle` this is called with (`DEFAULT_PROTECTED_PREFIXES`
+/// and rows loaded from `protected_paths`) is a plain-ASCII path, so a
+/// successful char-by-char prefix match above always consumes exactly
+/// `needle.len()` bytes of `haystack`, making this byte index safe to use
+/// directly without re-checking a UTF-8 char boundary.
+///
+/// Without this, a plain string-prefix check would treat "C:\Windows" as a
+/// prefix of the unrelated "C:\WindowsOld", incorrectly blocking a folder
+/// that merely shares characters with a protected path rather than actually
+/// being inside it.
+fn is_path_boundary(haystack: &str, len: usize) -> bool {
+    matches!(haystack.as_bytes().get(len), None | Some(b'\\' | b'/'))
 }
 
 #[cfg(test)]
@@ -212,6 +229,22 @@ mod tests {
         let decisions = check_paths(&conn, &[format!("{prefix}/some/inner/file")]).unwrap();
         assert!(!decisions[0].allowed);
         assert!(decisions[0].reason.is_some());
+    }
+
+    #[test]
+    fn does_not_match_an_unrelated_path_that_shares_prefix_characters() {
+        // A folder like "C:\WindowsOld" or "/usr2" merely starts with the
+        // same characters as a protected prefix; it is not actually inside
+        // it, and a plain string-prefix check would wrongly treat it as
+        // protected.
+        let conn = make_conn();
+        seed_defaults(&conn, 1).unwrap();
+        let prefix = a_protected_prefix();
+        let decisions = check_paths(&conn, &[format!("{prefix}Old/file.txt")]).unwrap();
+        assert!(
+            decisions[0].allowed,
+            "a path merely sharing prefix characters must not be blocked"
+        );
     }
 
     #[test]

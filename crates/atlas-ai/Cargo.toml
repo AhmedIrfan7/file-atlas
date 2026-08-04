@@ -1,0 +1,29 @@
+[package]
+name = "atlas-ai"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "Optional local-first AI layer for File Atlas: embeddings, semantic search, and natural-language query translation via Ollama, with an opt-in cloud fallback."
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+rusqlite = { workspace = true }
+time = { workspace = true }
+reqwest = { workspace = true }
+atlas-search = { path = "../atlas-search" }
+
+[dev-dependencies]
+atlas-db = { path = "../atlas-db" }
+tempfile = { workspace = true }

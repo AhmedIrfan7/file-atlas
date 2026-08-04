@@ -43,6 +43,7 @@ crates/
   atlas-platform/      trait plus per-OS implementations
   atlas-search/        full-text and structured search
   atlas-recommender/   rule-based cleanup suggestions
+  atlas-ai/            optional local-first AI layer: embeddings, semantic search, NL query translation
 apps/
   cli/                 atlas-cli: engine harness (scan, stats, volumes, search commands)
   desktop/             Tauri app: Rust shell in src-tauri/, React UI in src/
@@ -88,6 +89,10 @@ Commands live in `apps/desktop/src-tauri/src/commands.rs`. Each is a thin adapte
 | `get_storage_map_view(path, category, since_days)`                                  | Folder-size breakdown for one drill-down level (see below)                                                     |
 | `get_life_timeline(granularity, since_days)`                                        | File-creation histogram bucketed by day or month (see below)                                                   |
 | `get_screenshot_bursts` / `get_project_bursts`                                      | Auto-detected creation-activity clusters (see below)                                                           |
+| `get_ai_status` / `get_ai_settings` / `set_ai_settings`                             | Local AI availability, index progress, and configuration (see below)                                           |
+| `build_search_index` / `cancel_search_index`                                        | Background job embedding every live file name; `embed-progress`/`embed-finished` events                        |
+| `semantic_search_files(query, limit)`                                               | Embedding-similarity search over file names (see below)                                                        |
+| `translate_natural_language_query(query, use_cloud)`                                | Natural language to `atlas_search` filter-DSL translation (see below)                                          |
 
 Events emitted to the frontend: `scan-progress` (`{ root, files_seen, bytes_seen }`) / `scan-finished` during a scan; `hash-progress` (`{ files_hashed, files_total }`) / `hash-finished` (`{ files_hashed, errors }`) during a hash pass.
 
@@ -112,6 +117,14 @@ The frontend (`apps/desktop/src/components/StorageMapView.tsx`) holds an explici
 `get_life_timeline` calls `atlas_core::timeline::get_timeline`, which buckets every live file's `created_at` into day or month periods entirely in SQL (`strftime(created_at, 'unixepoch', 'start of day' | 'start of month')`, migration 0004's `idx_files_created` index makes the grouping indexed rather than a full scan). `get_screenshot_bursts` and `get_project_bursts` call the two burst detectors in the same module: days with an unusual number of screenshot-named image creations anywhere in the index, and folder-and-day pairs with an unusual number of file creations at once. Both use fixed threshold constants (`SCREENSHOT_BURST_MIN_COUNT`, `PROJECT_BURST_MIN_COUNT`), the same style as `atlas_recommender::engine`'s fixed rule thresholds. See ADR 0009 for why only two burst types ship now (receipt clusters and semester periods are deferred, not dropped) and why granularity is day/month only, not a generic picker.
 
 The frontend (`apps/desktop/src/components/TimelineView.tsx`) offers three fixed view presets, This week / This year / All time (`timelineStore.ts`), reusing the storage map's segmented-control pattern from ADR 0008, and renders the histogram as a plain CSS bar chart (`TimelineChart.tsx`) with burst results shown as cards (`BurstCard.tsx`).
+
+### Local AI layer
+
+`atlas-ai` is the optional, local-first AI layer added in M9: nothing in this crate runs unless a Tauri command explicitly builds a provider and calls it, there is no background service, and no data leaves the machine unless the user has both enabled cloud AI in settings and confirmed that specific request. `EmbeddingProvider` and `ChatProvider` (`atlas_ai::provider`) are the same kind of seam as `atlas_platform::PlatformFs`: core logic depends on the trait, never a concrete backend. `OllamaProvider` (`atlas_ai::ollama`) talks to a local Ollama instance over HTTP for both embeddings and chat, degrading to a clear `Unavailable`/`NoChatModel` error rather than blocking anything when Ollama is not running or a model is not installed. `CloudProvider` (`atlas_ai::cloud`) is an opt-in OpenAI-compatible chat client that only ever sends the caller's own typed text, never file names or paths.
+
+`build_search_index` embeds every live file's name (plus category and containing folder for context) that has no embedding yet under the current model, following the same background-thread-plus-progress-events pattern as `start_scan`/`hash_duplicates`. `semantic_search_files` ranks stored embeddings against a query by cosine similarity, computed as a linear scan in Rust rather than a SQLite vector extension (same "no new indexing dependency until there is a real performance ceiling" reasoning as ADR 0008's storage map). `translate_natural_language_query` turns plain English into `atlas_search`'s existing filter-DSL string instead of generating SQL directly, validates the result against the real parser (`atlas_search::parser::parse`) before trusting it, and falls back to treating the input as free text if translation is unavailable or its output does not parse. See ADR 0011 for why embeddings are scoped to file names rather than extracted PDF/DOCX text, why cloud support is a generic OpenAI-compatible client rather than a named vendor integration, and a real connection-locking bug `cargo clippy` caught before it reached production: an early draft held the app's single shared database connection locked across the network call to Ollama, which would have frozen every other database command for the duration of that request.
+
+The frontend (`apps/desktop/src/components/AiSearchView.tsx`) offers two modes, "Ask in plain English" (translate then run through the same search results list M3 built, showing the translated query so nothing runs as a black box) and "Semantic search" (embedding similarity, its own results list with a match-score display). `AiStatusBanner` surfaces Ollama availability and drives the search-index build progress bar; `AiSettingsPanel` lets the user pick an installed chat model and, collapsed by default, configure and enable cloud AI; `CloudConfirmDialog` is the per-request confirmation gate that a cloud-enabled setting alone does not bypass.
 
 ## Safety pipeline
 

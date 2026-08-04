@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { setAiSettings } from "../lib/atlas";
+import { getAiStatus, setAiSettings } from "../lib/atlas";
 import { useAiStore } from "../store/aiStore";
 import type { AiSettings } from "../types";
 
@@ -8,6 +8,7 @@ export default function AiSettingsPanel() {
   const settings = useAiStore((s) => s.settings);
   const setSettings = useAiStore((s) => s.setSettings);
   const status = useAiStore((s) => s.status);
+  const setStatus = useAiStore((s) => s.setStatus);
   // Local draft only for the cloud sub-form, which has its own explicit Save
   // button; the chat-model dropdown below applies immediately and reads
   // straight from the store, so it never needs a separate draft copy that
@@ -25,6 +26,12 @@ export default function AiSettingsPanel() {
     await setAiSettings(next);
     setSettings(next);
     setSaved(true);
+    // The status banner's "no chat model configured" warning is derived from
+    // a snapshot taken at mount; without this, saving a chat model here
+    // would leave that warning visibly stale until the next embed finishes.
+    getAiStatus()
+      .then(setStatus)
+      .catch(() => undefined);
   }
 
   const chatModelOptions = (status?.installed_models ?? []).filter(

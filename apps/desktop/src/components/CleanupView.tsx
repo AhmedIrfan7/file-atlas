@@ -1,31 +1,49 @@
 import { useEffect } from "react";
 
-import { getCleanupRecommendations, trashSelectedPaths } from "../lib/atlas";
+import {
+  getCleanupRecommendations,
+  listRecentActions,
+  restoreTrashAction,
+  trashSelectedPaths,
+} from "../lib/atlas";
 import { bytesForSelection, useCleanupStore } from "../store/cleanupStore";
+import { useTransientMessage } from "../lib/useTransientMessage";
 import DeletePreviewBar from "./DeletePreviewBar";
+import RecentActionsPanel from "./RecentActionsPanel";
 import RecommendationCard from "./RecommendationCard";
 
+const RECENT_ACTIONS_LIMIT = 20;
+
 export default function CleanupView() {
+  const [successMessage, showSuccessMessage] = useTransientMessage();
   const recommendations = useCleanupStore((s) => s.recommendations);
   const selectedPaths = useCleanupStore((s) => s.selectedPaths);
+  const recentActions = useCleanupStore((s) => s.recentActions);
   const loading = useCleanupStore((s) => s.loading);
   const error = useCleanupStore((s) => s.error);
   const setRecommendations = useCleanupStore((s) => s.setRecommendations);
+  const refreshRecommendations = useCleanupStore((s) => s.refreshRecommendations);
+  const setRecentActions = useCleanupStore((s) => s.setRecentActions);
   const togglePath = useCleanupStore((s) => s.togglePath);
   const setGroupSelected = useCleanupStore((s) => s.setGroupSelected);
   const setLoading = useCleanupStore((s) => s.setLoading);
   const setError = useCleanupStore((s) => s.setError);
 
-  const refresh = () => {
-    setLoading(true);
-    getCleanupRecommendations()
-      .then(setRecommendations)
-      .catch((err: unknown) => setError(String(err)))
-      .finally(() => setLoading(false));
+  const refreshRecentActions = () => {
+    listRecentActions(RECENT_ACTIONS_LIMIT)
+      .then(setRecentActions)
+      .catch((err: unknown) => setError(String(err)));
   };
 
   useEffect(() => {
-    refresh();
+    setLoading(true);
+    Promise.all([getCleanupRecommendations(), listRecentActions(RECENT_ACTIONS_LIMIT)])
+      .then(([recs, actions]) => {
+        setRecommendations(recs);
+        setRecentActions(actions);
+      })
+      .catch((err: unknown) => setError(String(err)))
+      .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -34,9 +52,25 @@ export default function CleanupView() {
     if (paths.length === 0) return;
     setLoading(true);
     trashSelectedPaths(paths)
-      .then(refresh)
+      .then(() => {
+        showSuccessMessage(
+          `Sent ${paths.length} item${paths.length === 1 ? "" : "s"} to the Recycle Bin`,
+        );
+        refreshRecentActions();
+        return getCleanupRecommendations().then(refreshRecommendations);
+      })
       .catch((err: unknown) => setError(String(err)))
       .finally(() => setLoading(false));
+  }
+
+  function handleRestore(actionId: number) {
+    restoreTrashAction(actionId)
+      .then(() => {
+        showSuccessMessage("Item restored");
+        refreshRecentActions();
+        return getCleanupRecommendations().then(refreshRecommendations);
+      })
+      .catch((err: unknown) => setError(String(err)));
   }
 
   const bytesToFree = bytesForSelection(recommendations, selectedPaths);
@@ -49,6 +83,7 @@ export default function CleanupView() {
       <h1 className="text-2xl font-semibold mb-6">Explainable suggestions, nothing automatic</h1>
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+      {successMessage && <p className="text-sm text-emerald-400 mb-4">{successMessage}</p>}
 
       {loading && recommendations.length === 0 ? (
         <p className="text-sm text-[color:var(--color-atlas-muted)]">Looking for suggestions...</p>
@@ -74,6 +109,13 @@ export default function CleanupView() {
           ))}
         </div>
       )}
+
+      <section className="mt-10">
+        <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-3">
+          Recently deleted
+        </h2>
+        <RecentActionsPanel actions={recentActions} onRestore={handleRestore} />
+      </section>
 
       <DeletePreviewBar
         pathCount={selectedPaths.size}

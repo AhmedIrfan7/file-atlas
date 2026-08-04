@@ -18,6 +18,18 @@ export default function DeletePreviewBar({
   busy,
 }: Props) {
   const [confirming, setConfirming] = useState(false);
+  const [prevPathCount, setPrevPathCount] = useState(pathCount);
+
+  // The selection emptying out (a successful delete, a cancel, or manually
+  // deselecting everything) always means the current review step is done;
+  // without this, the bar stayed stuck on the final "Confirm delete" step
+  // for the next unrelated selection instead of starting over at "Review".
+  // Adjusting state during render rather than in an effect avoids an extra
+  // committed frame of the stale step (react.dev/learn/you-might-not-need-an-effect).
+  if (pathCount !== prevPathCount) {
+    setPrevPathCount(pathCount);
+    if (pathCount === 0) setConfirming(false);
+  }
 
   if (pathCount === 0) return null;
 

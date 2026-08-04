@@ -50,7 +50,9 @@ export default function UpdateChecker() {
         </button>
       )}
       {status === "installing" && <span>Installing update...</span>}
-      {status === "error" && <span title="Could not check for updates">Update check failed</span>}
+      {/* A failed check (no release published yet, offline, ...) is not
+          something the user can act on, so it stays silent rather than
+          showing an alarming persistent error next to the version number. */}
     </div>
   );
 }

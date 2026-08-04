@@ -1,13 +1,24 @@
 import { create } from "zustand";
 
-import type { Recommendation } from "../types";
+import type { ActionRow, Recommendation } from "../types";
 
 interface CleanupStore {
   recommendations: Recommendation[];
   selectedPaths: Set<string>;
+  recentActions: ActionRow[];
   loading: boolean;
   error: string | null;
+  /** Initial load only: replaces recommendations and pre-selects High confidence items. */
   setRecommendations: (recommendations: Recommendation[]) => void;
+  /**
+   * Post-delete/restore refresh: replaces recommendations without
+   * re-applying the pre-select-High-confidence default. Selection always
+   * resets to empty here, since silently re-arming a fresh "select all"
+   * after the user just acted is exactly the surprise the app's safety
+   * pipeline is supposed to prevent.
+   */
+  refreshRecommendations: (recommendations: Recommendation[]) => void;
+  setRecentActions: (actions: ActionRow[]) => void;
   togglePath: (path: string) => void;
   setGroupSelected: (paths: string[], selected: boolean) => void;
   setLoading: (loading: boolean) => void;
@@ -28,10 +39,13 @@ function defaultSelection(recommendations: Recommendation[]): Set<string> {
 export const useCleanupStore = create<CleanupStore>((set) => ({
   recommendations: [],
   selectedPaths: new Set(),
+  recentActions: [],
   loading: false,
   error: null,
   setRecommendations: (recommendations) =>
     set({ recommendations, selectedPaths: defaultSelection(recommendations) }),
+  refreshRecommendations: (recommendations) => set({ recommendations, selectedPaths: new Set() }),
+  setRecentActions: (recentActions) => set({ recentActions }),
   togglePath: (path) =>
     set((state) => {
       const next = new Set(state.selectedPaths);

@@ -60,13 +60,19 @@ impl PlatformFs for WindowsFs {
     }
 
     fn open_in_file_manager(&self, path: &Path) -> Result<()> {
-        // explorer.exe parses its own command line rather than using
-        // standard argv splitting, so `/select,<path>` must be one argument,
-        // not `/select,` and the path as two separate ones.
-        let select_arg = format!("/select,{}", path.display());
-        std::process::Command::new("explorer.exe")
-            .arg(select_arg)
-            .spawn()
+        // A folder result should open *into* itself, not get merely
+        // highlighted inside its parent; only a file gets the reveal/select
+        // treatment. Matches `linux_impl`'s existing directory-vs-file split.
+        let mut cmd = std::process::Command::new("explorer.exe");
+        if path.is_dir() {
+            cmd.arg(path);
+        } else {
+            // explorer.exe parses its own command line rather than using
+            // standard argv splitting, so `/select,<path>` must be one
+            // argument, not `/select,` and the path as two separate ones.
+            cmd.arg(format!("/select,{}", path.display()));
+        }
+        cmd.spawn()
             .map_err(|e| PlatformError::Api(format!("failed to launch Explorer: {e}")))?;
         Ok(())
     }

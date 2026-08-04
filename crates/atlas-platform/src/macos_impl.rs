@@ -102,8 +102,14 @@ impl PlatformFs for MacosFs {
     }
 
     fn open_in_file_manager(&self, path: &Path) -> Result<()> {
-        let status = std::process::Command::new("open")
-            .arg("-R")
+        // A folder result should open *into* itself, not get merely
+        // highlighted inside its parent; only a file gets the `-R` reveal
+        // treatment. Matches `linux_impl`'s existing directory-vs-file split.
+        let mut cmd = std::process::Command::new("open");
+        if !path.is_dir() {
+            cmd.arg("-R");
+        }
+        let status = cmd
             .arg(path)
             .status()
             .map_err(|e| PlatformError::Api(format!("failed to launch Finder: {e}")))?;

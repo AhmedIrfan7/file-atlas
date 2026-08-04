@@ -9,6 +9,7 @@ import {
   trashSelectedPaths,
 } from "../lib/atlas";
 import { bytesToFree, pathsToTrash, useDuplicatesStore } from "../store/duplicatesStore";
+import { useTransientMessage } from "../lib/useTransientMessage";
 import DeletePreviewBar from "./DeletePreviewBar";
 import DuplicateGroupCard from "./DuplicateGroupCard";
 import RecentActionsPanel from "./RecentActionsPanel";
@@ -17,6 +18,7 @@ const GROUP_LIMIT = 50;
 const RECENT_ACTIONS_LIMIT = 20;
 
 export default function DuplicatesView() {
+  const [successMessage, showSuccessMessage] = useTransientMessage();
   const groups = useDuplicatesStore((s) => s.groups);
   const keepOverrides = useDuplicatesStore((s) => s.keepOverrides);
   const hashing = useDuplicatesStore((s) => s.hashing);
@@ -73,6 +75,9 @@ export default function DuplicatesView() {
     setLoading(true);
     trashSelectedPaths(paths)
       .then(() => {
+        showSuccessMessage(
+          `Sent ${paths.length} item${paths.length === 1 ? "" : "s"} to the Recycle Bin`,
+        );
         refreshGroups();
         refreshRecentActions();
       })
@@ -83,6 +88,7 @@ export default function DuplicatesView() {
   function handleRestore(actionId: number) {
     restoreTrashAction(actionId)
       .then(() => {
+        showSuccessMessage("Item restored");
         refreshGroups();
         refreshRecentActions();
       })
@@ -119,6 +125,7 @@ export default function DuplicatesView() {
       )}
 
       {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+      {successMessage && <p className="text-sm text-emerald-400 mb-4">{successMessage}</p>}
 
       <section className="mb-10">
         {loading && groups.length === 0 ? (

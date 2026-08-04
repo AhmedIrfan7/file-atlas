@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Atlas — The living map of everything on your computer</title>
+    <meta
+      name="description"
+      content="File Atlas is a local-first desktop app that indexes, understands, and helps you safely reshape everything stored on your machine. Natural-language search, safe duplicate cleanup, and explainable recommendations, without your files leaving your device unless you say so."
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="nav-inner">
+        <span class="brand">File Atlas</span>
+        <nav class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#principles">Principles</a>
+          <a href="#download">Download</a>
+          <a href="https://github.com/AhmedIrfan7/file-atlas">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">v1.0.0 &middot; open source &middot; Windows, macOS, Linux</p>
+        <h1>The living map of everything on your computer.</h1>
+        <p class="lede">
+          File Atlas indexes, understands, and helps you safely reshape everything stored on your
+          machine. A persistent memory of your files, a searchable map of your storage, and a
+          trustworthy hand that helps you clean up without ever losing something you needed.
+        </p>
+        <div class="cta-row">
+          <a
+            class="btn btn-primary"
+            href="https://github.com/AhmedIrfan7/file-atlas/releases/latest"
+            >Download latest release</a
+          >
+          <a class="btn btn-secondary" href="https://github.com/AhmedIrfan7/file-atlas"
+            >View source on GitHub</a
+          >
+        </div>
+        <p class="hero-note">
+          Local-first by default. No file content leaves your machine unless you explicitly opt in.
+        </p>
+      </section>
+
+      <section class="why">
+        <div class="why-card">
+          <h3>File explorers</h3>
+          <p>Show you files, but never understand them.</p>
+        </div>
+        <div class="why-card">
+          <h3>Duplicate finders</h3>
+          <p>Run once, then forget everything they found.</p>
+        </div>
+        <div class="why-card">
+          <h3>Cleaners</h3>
+          <p>Aggressive, unsafe, and full of dark patterns.</p>
+        </div>
+        <div class="why-card why-card-accent">
+          <h3>File Atlas</h3>
+          <p>Builds a durable, transparent understanding of what you own, and acts on it safely.</p>
+        </div>
+      </section>
+
+      <section id="features" class="features">
+        <h2>Everything you need to understand your disk</h2>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <h3>Home</h3>
+            <p>
+              Understand your disk within seconds: category breakdown, largest and oldest files, and
+              a "not touched in over a year" bucket.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Search</h3>
+            <p>
+              Full-text and structured search under 100ms on a warm cache. Filters like
+              <code>type:pdf</code>, <code>size&gt;10mb</code>, <code>age&gt;1y</code>, saved
+              searches.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Duplicates</h3>
+            <p>
+              BLAKE3-hashed duplicate detection with a safe default (keep newest, show why) and bulk
+              trash with preview and full undo.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Smart Cleanup</h3>
+            <p>
+              Rule-based recommendations for empty folders, forgotten installers, old archives, and
+              screenshot pileups. Every suggestion shows its reason and confidence, no black boxes.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Storage Map</h3>
+            <p>
+              A treemap of where your space actually went, with drill-down by folder and category,
+              plus a time slider showing what changed.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Life Timeline</h3>
+            <p>
+              A chronological view of your digital life: project bursts, screenshot bursts, and
+              semester periods, auto-grouped.
+            </p>
+          </article>
+          <article class="feature-card feature-card-wide">
+            <h3>Local AI Search</h3>
+            <p>
+              Natural-language search over your files, backed by a local embedding index and an
+              optional local LLM via <a href="https://ollama.com">Ollama</a>, entirely on-device by
+              default. A cloud LLM path exists too, but it is opt-in, clearly labeled, and confirmed
+              per request, never silently enabled.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="screenshots">
+        <h2>See it in action</h2>
+        <div class="screenshot-placeholder">
+          <p>Screenshots of the real running app are on the way.</p>
+        </div>
+      </section>
+
+      <section id="principles" class="principles">
+        <h2>Principles</h2>
+        <ul class="principles-list">
+          <li>
+            <strong>Local-first.</strong> No file content leaves your machine unless you explicitly
+            opt in.
+          </li>
+          <li>
+            <strong>Safety over speed.</strong> Every destructive action is reversible or gated
+            behind a clear confirmation. Recycle Bin, not <code>rm -rf</code>.
+          </li>
+          <li>
+            <strong>Transparency.</strong> Every suggestion has a "why". No black-box automatic
+            deletes.
+          </li>
+          <li><strong>Progressive disclosure.</strong> Simple by default, deep on demand.</li>
+          <li>
+            <strong>Cross-platform.</strong> Windows, macOS, and Linux, with real per-OS
+            implementations.
+          </li>
+          <li><strong>Performance at real scale.</strong> Built for 2M+ files and 8TB+ drives.</li>
+        </ul>
+      </section>
+
+      <section class="milestones">
+        <h2>Built in the open</h2>
+        <p class="milestones-lede">
+          Every milestone shipped with its own tests, docs, and architecture decision records. See
+          the full history in
+          <a href="https://github.com/AhmedIrfan7/file-atlas/blob/main/CHANGELOG.md"
+            >CHANGELOG.md</a
+          >
+          and
+          <a href="https://github.com/AhmedIrfan7/file-atlas/blob/main/docs/ROADMAP.md"
+            >ROADMAP.md</a
+          >.
+        </p>
+        <ol class="milestone-list">
+          <li>Foundation: repo, tooling, CI</li>
+          <li>Scanner and index engine</li>
+          <li>Home view</li>
+          <li>Search</li>
+          <li>Duplicates</li>
+          <li>Smart cleanup with explainable recommendations</li>
+          <li>Storage map</li>
+          <li>Life timeline</li>
+          <li>macOS and Linux support</li>
+          <li>Local AI layer</li>
+          <li>v1.0 release</li>
+        </ol>
+      </section>
+
+      <section id="download" class="download">
+        <h2>Download</h2>
+        <p>
+          Installers for Windows, macOS, and Linux are published on every release. File Atlas checks
+          for updates on launch and never installs one without a click.
+        </p>
+        <div class="cta-row">
+          <a
+            class="btn btn-primary"
+            href="https://github.com/AhmedIrfan7/file-atlas/releases/latest"
+            >Get the latest release</a
+          >
+        </div>
+        <p class="download-note">
+          Installers are not yet OS-signed with a paid publisher certificate, so Windows and macOS
+          may show an unknown-publisher warning on first install. The update mechanism itself is
+          cryptographically signed and verified independently of that.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>File Atlas is open source under the MIT License.</p>
+      <p>
+        <a href="https://github.com/AhmedIrfan7/file-atlas">github.com/AhmedIrfan7/file-atlas</a>
+      </p>
+    </footer>
+  </body>
+</html>

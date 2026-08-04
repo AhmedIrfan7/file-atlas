@@ -6,6 +6,7 @@
 // can revisit per-command.
 #![allow(clippy::needless_pass_by_value)]
 
+mod ai_commands;
 mod commands;
 mod duplicate_commands;
 mod recommendation_commands;
@@ -62,6 +63,13 @@ pub fn run() {
             timeline_commands::get_life_timeline,
             timeline_commands::get_screenshot_bursts,
             timeline_commands::get_project_bursts,
+            ai_commands::get_ai_status,
+            ai_commands::get_ai_settings,
+            ai_commands::set_ai_settings,
+            ai_commands::build_search_index,
+            ai_commands::cancel_search_index,
+            ai_commands::semantic_search_files,
+            ai_commands::translate_natural_language_query,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

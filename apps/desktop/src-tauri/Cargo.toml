@@ -37,3 +37,4 @@ atlas-db = { path = "../../../crates/atlas-db" }
 atlas-platform = { path = "../../../crates/atlas-platform" }
 atlas-search = { path = "../../../crates/atlas-search" }
 atlas-recommender = { path = "../../../crates/atlas-recommender" }
+atlas-ai = { path = "../../../crates/atlas-ai" }

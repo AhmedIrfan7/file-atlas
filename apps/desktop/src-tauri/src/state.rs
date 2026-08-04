@@ -18,6 +18,8 @@ pub struct AppState {
     pub scan_running: Arc<AtomicBool>,
     pub hash_cancel: Arc<AtomicBool>,
     pub hash_running: Arc<AtomicBool>,
+    pub embed_cancel: Arc<AtomicBool>,
+    pub embed_running: Arc<AtomicBool>,
 }
 
 impl AppState {
@@ -31,6 +33,8 @@ impl AppState {
             scan_running: Arc::new(AtomicBool::new(false)),
             hash_cancel: Arc::new(AtomicBool::new(false)),
             hash_running: Arc::new(AtomicBool::new(false)),
+            embed_cancel: Arc::new(AtomicBool::new(false)),
+            embed_running: Arc::new(AtomicBool::new(false)),
         })
     }
 }

@@ -143,14 +143,21 @@ pub fn run_with_progress(
     let removed_marked = sweep_removed(conn, &meta.root, meta.scan_ts, now)?;
     let live_files_after = count_live_files(conn)?;
 
-    close_scan_row(
-        conn,
-        scan_id,
-        entries_persisted,
-        last_report.as_ref(),
-        now,
-        errors,
-    )?;
+    close_scan_row(conn, scan_id, entries_persisted, last_report.as_ref(), now)?;
+
+    // The channel draining without a Done event is not a normal completion:
+    // scanner.rs only skips sending one when its own receiver end was
+    // already gone (an abnormal shutdown), and the same would happen if the
+    // scanner thread panicked mid-walk (dropping its Sender unwinds past the
+    // final send). close_scan_row above already recorded this scan row as
+    // "failed" rather than "completed", so the persisted history stays
+    // honest; returning here as well (instead of silently reporting success)
+    // lets the caller's existing per-root error handling
+    // (commands.rs::scan_one_root's caller) treat it the same as any other
+    // scan failure instead of quietly moving on.
+    let Some(scan_report) = last_report else {
+        return Err(IndexError::NoDoneEvent);
+    };
 
     Ok(IndexStats {
         entries_persisted,
@@ -158,7 +165,7 @@ pub fn run_with_progress(
         removed_marked,
         live_files_after,
         scan_id,
-        scan_report: last_report,
+        scan_report: Some(scan_report),
     })
 }
 
@@ -176,19 +183,17 @@ fn close_scan_row(
     files_persisted: u64,
     report: Option<&ScanReport>,
     finished_at: i64,
-    error_count: u32,
 ) -> Result<()> {
+    // No report at all (the scanner's channel closed without ever sending a
+    // Done event) is never a real completion, regardless of whether any
+    // individual Error events happened to arrive first: it means the walk
+    // was cut short abnormally (its receiver went away, or the scanning
+    // thread panicked), so this is unconditionally "failed", not
+    // conditionally on error_count.
     let (status, bytes_seen) = match report {
         Some(r) if r.cancelled => ("cancelled", r.bytes_seen),
         Some(r) => ("completed", r.bytes_seen),
-        None => (
-            if error_count > 0 {
-                "failed"
-            } else {
-                "completed"
-            },
-            0,
-        ),
+        None => ("failed", 0),
     };
     conn.execute(
         "UPDATE scans SET finished_at = ?1, files_seen = ?2, bytes_seen = ?3, status = ?4 WHERE id = ?5",
@@ -341,5 +346,38 @@ mod tests {
         let stats = run(&mut conn, rx2, &meta2).unwrap();
 
         assert_eq!(stats.removed_marked, 1);
+    }
+
+    #[test]
+    fn channel_closing_without_a_done_event_is_reported_as_a_real_failure() {
+        // This happens for real whenever the scanner's channel closes
+        // abnormally: its own receiver already gone, or (relevant since the
+        // commands.rs scanner-panic fix) the scanning thread panicking
+        // mid-walk, which drops its Sender without ever reaching the final
+        // Done send. Before this fix, run_with_progress silently reported
+        // Ok with status "completed" as long as no ScanEvent::Error had
+        // already come through, misrepresenting a cut-short scan as a
+        // normal one in the persisted scans table.
+        let root = tempdir().expect("tempdir");
+        let mut conn = make_conn();
+        seed_volume(&mut conn);
+        let meta = ScanMeta::now(root_prefix(root.path()), "vol:test");
+
+        let (tx, rx) = crossbeam_channel::unbounded::<ScanEvent>();
+        drop(tx); // closes the channel with no events at all, no Done
+
+        let result = run(&mut conn, rx, &meta);
+        assert!(
+            matches!(result, Err(IndexError::NoDoneEvent)),
+            "expected NoDoneEvent, got {result:?}"
+        );
+
+        let status: String = conn
+            .query_row("SELECT status FROM scans LIMIT 1", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            status, "failed",
+            "a scan that never reached a Done event must not be recorded as completed"
+        );
     }
 }

@@ -71,10 +71,13 @@ jobs:
       - name: Build Tauri bundle
         run: pnpm --filter atlas-desktop tauri build --ci --config src-tauri/tauri.ci.conf.json
 
+      # Cargo workspace root is the repo root, so target/ lives there too,
+      # not under apps/desktop/src-tauri - the old path never matched
+      # anything and every run silently skipped the artifact upload.
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: file-atlas-${{ matrix.os }}
           path: |
-            apps/desktop/src-tauri/target/release/bundle/**/*
+            target/release/bundle/**/*
           if-no-files-found: warn

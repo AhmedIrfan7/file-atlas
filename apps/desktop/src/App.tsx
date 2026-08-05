@@ -100,13 +100,13 @@ export default function App() {
   return (
     <>
       {lastError && (
-        <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-center gap-4 bg-red-500/10 border-b border-red-500/30 text-red-300 text-sm px-6 py-2">
+        <div className="fixed top-0 inset-x-0 z-50 flex items-center justify-center gap-4 bg-[color:var(--color-atlas-danger)]/10 border-b border-[color:var(--color-atlas-danger)]/30 text-[color:var(--color-atlas-danger)] text-sm px-6 py-2">
           <span>{lastError}</span>
           <button
             type="button"
             onClick={() => setError(null)}
             aria-label="Dismiss error"
-            className="shrink-0 text-red-300/70 hover:text-red-300"
+            className="shrink-0 text-[color:var(--color-atlas-danger)]/70 hover:text-[color:var(--color-atlas-danger)]"
           >
             &times;
           </button>

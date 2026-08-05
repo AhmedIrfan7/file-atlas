@@ -44,7 +44,7 @@ jobs:
           workspaces: "apps/desktop/src-tauri -> target"
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6.0.9
         with:
           run_install: false
 

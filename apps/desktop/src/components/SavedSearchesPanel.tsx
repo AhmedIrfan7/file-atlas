@@ -16,11 +16,11 @@ export default function SavedSearchesPanel({ savedSearches, onRun, onDelete }: P
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="divide-y divide-[color:var(--color-atlas-border)]">
       {savedSearches.map((saved) => (
         <li
           key={saved.id}
-          className="flex items-center justify-between gap-2 rounded-lg border border-[color:var(--color-atlas-border)] px-3 py-2"
+          className="flex items-center justify-between gap-2 rounded-md px-2 py-2 -mx-2 hover:bg-[color:var(--color-atlas-surface-hover)] transition-colors"
         >
           <button
             type="button"
@@ -35,7 +35,7 @@ export default function SavedSearchesPanel({ savedSearches, onRun, onDelete }: P
           <button
             type="button"
             onClick={() => onDelete(saved.id)}
-            className="shrink-0 text-xs text-[color:var(--color-atlas-muted)] hover:text-red-400 transition-colors"
+            className="shrink-0 text-xs text-[color:var(--color-atlas-muted)] hover:text-[color:var(--color-atlas-danger)] transition-colors"
             aria-label={`Delete saved search ${saved.name}`}
           >
             Delete

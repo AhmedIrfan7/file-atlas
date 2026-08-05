@@ -7,6 +7,7 @@ import type { StorageNode } from "../types";
 import StorageBreadcrumb from "./StorageBreadcrumb";
 import StorageFilters from "./StorageFilters";
 import TreemapCanvas from "./TreemapCanvas";
+import PageHeader from "./ui/PageHeader";
 
 export default function StorageMapView() {
   const breadcrumbs = useStorageMapStore((s) => s.breadcrumbs);
@@ -41,15 +42,13 @@ export default function StorageMapView() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-4xl mx-auto">
-      <p className="text-xs uppercase tracking-widest text-[color:var(--color-atlas-muted)] mb-2">
-        Storage
-      </p>
-      <h1 className="text-2xl font-semibold mb-1">See where the space actually went</h1>
-      <p className="text-sm text-[color:var(--color-atlas-muted)] mb-6">
-        {loading ? "Loading..." : `${formatBytes(totalBytes)} in this view`}
-      </p>
+      <PageHeader
+        eyebrow="Storage"
+        title="See where the space actually went"
+        subtitle={loading ? "Loading..." : `${formatBytes(totalBytes)} in this view`}
+      />
 
-      {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+      {error && <p className="text-sm text-[color:var(--color-atlas-danger)] mb-4">{error}</p>}
 
       <StorageBreadcrumb breadcrumbs={breadcrumbs} onJumpTo={jumpTo} />
       <StorageFilters

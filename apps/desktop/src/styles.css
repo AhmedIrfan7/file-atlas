@@ -1,12 +1,39 @@
 @import "tailwindcss";
 
-/* File Atlas base tokens. Kept small and extended in later milestones. */
+/* File Atlas design tokens.
+ *
+ * The base five (bg/fg/muted/accent/border) shipped in M0 and stay as the
+ * brand anchor. Everything below fills a real gap: with only those five,
+ * every surface in the app (nav, cards, panels) sat on the exact same flat
+ * background, separated from each other only by a 1px border, and the only
+ * non-neutral colors anywhere were the accent blue plus a handful of raw,
+ * uncoordinated Tailwind utility colors (text-red-400, text-emerald-400,
+ * text-amber-400) picked ad hoc per component. Product UI needs a real
+ * elevation layer and a standardized, named state-color vocabulary instead. */
 @theme {
   --color-atlas-bg: #0b0d10;
   --color-atlas-fg: #e6e8eb;
   --color-atlas-muted: #8a929c;
   --color-atlas-accent: #6ea8fe;
+  --color-atlas-accent-hover: #8ebcff;
+  --color-atlas-accent-ink: #0b0d10;
   --color-atlas-border: #1c2026;
+
+  /* A second neutral layer, one step up from bg: cards, panels, the nav
+   * bar, and list rows sit here instead of directly on the page background,
+   * so content actually reads as raised rather than just outlined. */
+  --color-atlas-surface: #14171c;
+  --color-atlas-surface-hover: #1b1f26;
+
+  /* Named, harmonized with the rest of the palette rather than raw Tailwind
+   * defaults sprinkled in ad hoc. Each has an -ink pairing for text that
+   * sits on a filled/tinted background of that color. */
+  --color-atlas-success: #34d399;
+  --color-atlas-success-ink: #06281c;
+  --color-atlas-warning: #fbbf24;
+  --color-atlas-warning-ink: #2c1c02;
+  --color-atlas-danger: #f87171;
+  --color-atlas-danger-ink: #2c0e0e;
 
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;

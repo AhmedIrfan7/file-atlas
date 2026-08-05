@@ -31,7 +31,7 @@ export default function SearchResultsList({ results, loading, hasQuery }: Props)
       {results.map((hit) => (
         <li
           key={hit.path}
-          className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 hover:bg-white/5 transition-colors"
+          className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 hover:bg-[color:var(--color-atlas-surface-hover)] transition-colors"
           title={hit.path}
         >
           <div className="min-w-0">

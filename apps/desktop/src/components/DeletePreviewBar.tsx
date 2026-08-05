@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { formatBytes } from "../lib/format";
+import Button from "./ui/Button";
 
 interface Props {
   pathCount: number;
@@ -34,7 +35,7 @@ export default function DeletePreviewBar({
   if (pathCount === 0) return null;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 border-t border-[color:var(--color-atlas-border)] bg-[color:var(--color-atlas-bg)] px-6 py-4">
+    <div className="fixed bottom-0 inset-x-0 border-t border-[color:var(--color-atlas-border)] bg-[color:var(--color-atlas-surface)] px-6 py-4 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.5)]">
       <div className="max-w-3xl mx-auto">
         {confirming ? (
           <div>
@@ -50,22 +51,12 @@ export default function DeletePreviewBar({
               ))}
             </ul>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onConfirm}
-                disabled={busy}
-                className="rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] text-sm font-medium px-4 py-2 disabled:opacity-40"
-              >
+              <Button variant="danger" onClick={onConfirm} disabled={busy}>
                 {busy ? "Deleting..." : "Confirm delete"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirming(false)}
-                disabled={busy}
-                className="rounded-lg border border-[color:var(--color-atlas-border)] text-sm px-4 py-2 text-[color:var(--color-atlas-muted)]"
-              >
+              </Button>
+              <Button variant="secondary" onClick={() => setConfirming(false)} disabled={busy}>
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -74,13 +65,9 @@ export default function DeletePreviewBar({
               <span className="font-semibold">{pathCount}</span> files selected,{" "}
               {formatBytes(bytesToFree)} to free
             </p>
-            <button
-              type="button"
-              onClick={() => setConfirming(true)}
-              className="rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] text-sm font-medium px-4 py-2"
-            >
-              Review & delete
-            </button>
+            <Button variant="primary" onClick={() => setConfirming(true)}>
+              Review &amp; delete
+            </Button>
           </div>
         )}
       </div>

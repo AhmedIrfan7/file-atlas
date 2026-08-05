@@ -7,6 +7,8 @@ import type { FileSummary, HomeSummary, StaleBucket } from "../types";
 import CategoryBreakdown from "./CategoryBreakdown";
 import StaleBucketCard from "./StaleBucketCard";
 import TopFilesList from "./TopFilesList";
+import Button from "./ui/Button";
+import Panel from "./ui/Panel";
 
 const TOP_N = 10;
 const STALE_MIN_AGE_DAYS = 365;
@@ -68,17 +70,15 @@ export default function HomeView() {
         <p className="text-sm text-[color:var(--color-atlas-muted)]">
           Couldn&rsquo;t load your file map.
         </p>
-        <button
-          type="button"
+        <Button
           onClick={() => {
             setLoading(true);
             setLoadError(null);
             load();
           }}
-          className="rounded-lg border border-[color:var(--color-atlas-border)] px-4 py-2 text-sm text-[color:var(--color-atlas-fg)] hover:border-[color:var(--color-atlas-accent)] transition-colors"
         >
           Try again
-        </button>
+        </Button>
       </main>
     );
   }
@@ -106,47 +106,41 @@ export default function HomeView() {
             {summary.live_folder_count.toLocaleString()} folders indexed
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setScreen("onboarding")}
-          className="rounded-lg border border-[color:var(--color-atlas-border)] px-4 py-2 text-sm text-[color:var(--color-atlas-muted)] hover:text-[color:var(--color-atlas-fg)] hover:border-[color:var(--color-atlas-accent)] transition-colors"
-        >
-          Add more folders
-        </button>
+        <Button onClick={() => setScreen("onboarding")}>Add more folders</Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <section>
-          <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Panel className="p-5">
+          <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-4">
             By category
           </h2>
           <CategoryBreakdown categories={summary.categories} totalBytes={summary.total_bytes} />
-        </section>
+        </Panel>
 
-        <section>
-          <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-3">
+        <Panel className="p-5">
+          <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-4">
             Not touched in a year
           </h2>
           {stale && <StaleBucketCard bucket={stale} />}
-        </section>
+        </Panel>
 
-        <section>
+        <Panel className="p-5">
           <TopFilesList
             title="Largest files"
             files={largest}
             valueMode="size"
             emptyLabel="Nothing indexed yet."
           />
-        </section>
+        </Panel>
 
-        <section>
+        <Panel className="p-5">
           <TopFilesList
             title="Oldest files"
             files={oldest}
             valueMode="age"
             emptyLabel="Nothing indexed yet."
           />
-        </section>
+        </Panel>
       </div>
     </main>
   );

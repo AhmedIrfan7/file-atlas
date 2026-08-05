@@ -13,6 +13,9 @@ import { useTransientMessage } from "../lib/useTransientMessage";
 import DeletePreviewBar from "./DeletePreviewBar";
 import DuplicateGroupCard from "./DuplicateGroupCard";
 import RecentActionsPanel from "./RecentActionsPanel";
+import Button from "./ui/Button";
+import PageHeader from "./ui/PageHeader";
+import Panel from "./ui/Panel";
 
 const GROUP_LIMIT = 50;
 const RECENT_ACTIONS_LIMIT = 20;
@@ -100,22 +103,15 @@ export default function DuplicatesView() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto pb-24">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <p className="text-xs uppercase tracking-widest text-[color:var(--color-atlas-muted)] mb-2">
-            Duplicates
-          </p>
-          <h1 className="text-2xl font-semibold">Find and safely clean up copies</h1>
-        </div>
-        <button
-          type="button"
-          onClick={handleFindDuplicates}
-          disabled={hashing}
-          className="shrink-0 rounded-lg border border-[color:var(--color-atlas-border)] px-4 py-2 text-sm text-[color:var(--color-atlas-muted)] hover:text-[color:var(--color-atlas-fg)] hover:border-[color:var(--color-atlas-accent)] disabled:opacity-40 transition-colors"
-        >
-          {hashing ? "Scanning..." : "Find duplicates"}
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Duplicates"
+        title="Find and safely clean up copies"
+        actions={
+          <Button onClick={handleFindDuplicates} disabled={hashing}>
+            {hashing ? "Scanning..." : "Find duplicates"}
+          </Button>
+        }
+      />
 
       {hashing && hashProgress && (
         <p className="text-sm text-[color:var(--color-atlas-muted)] mb-6">
@@ -124,8 +120,10 @@ export default function DuplicatesView() {
         </p>
       )}
 
-      {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
-      {successMessage && <p className="text-sm text-emerald-400 mb-4">{successMessage}</p>}
+      {error && <p className="text-sm text-[color:var(--color-atlas-danger)] mb-4">{error}</p>}
+      {successMessage && (
+        <p className="text-sm text-[color:var(--color-atlas-success)] mb-4">{successMessage}</p>
+      )}
 
       <section className="mb-10">
         {loading && groups.length === 0 ? (
@@ -149,12 +147,12 @@ export default function DuplicatesView() {
         )}
       </section>
 
-      <section>
+      <Panel className="p-4">
         <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-3">
           Recently deleted
         </h2>
         <RecentActionsPanel actions={recentActions} onRestore={handleRestore} />
-      </section>
+      </Panel>
 
       <DeletePreviewBar
         pathCount={trashCandidates.length}

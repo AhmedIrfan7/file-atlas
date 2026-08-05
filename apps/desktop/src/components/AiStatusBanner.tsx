@@ -1,5 +1,7 @@
 import { buildSearchIndex, cancelSearchIndex } from "../lib/atlas";
 import { useAiStore } from "../store/aiStore";
+import Button from "./ui/Button";
+import Panel from "./ui/Panel";
 
 export default function AiStatusBanner() {
   const status = useAiStore((s) => s.status);
@@ -11,7 +13,7 @@ export default function AiStatusBanner() {
 
   if (!status.ollama_available) {
     return (
-      <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300 mb-6">
+      <div className="rounded-lg border border-[color:var(--color-atlas-danger)]/30 bg-[color:var(--color-atlas-danger)]/10 px-4 py-3 text-sm text-[color:var(--color-atlas-danger)] mb-6">
         Ollama is not running. Start it locally to enable natural-language search and semantic
         search. Nothing here ever leaves your machine unless you turn on cloud AI below.
       </div>
@@ -21,14 +23,14 @@ export default function AiStatusBanner() {
   const building = embedProgress !== null;
 
   return (
-    <div className="rounded-lg border border-[color:var(--color-atlas-border)] px-4 py-3 mb-6 text-sm">
+    <Panel className="px-4 py-3 mb-6 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="text-[color:var(--color-atlas-muted)]">
           <span className="text-[color:var(--color-atlas-fg)]">Ollama connected.</span>{" "}
           {status.embedding_model_installed ? (
             <>Search index: {status.files_embedded.toLocaleString()} files embedded</>
           ) : (
-            <span className="text-amber-400">
+            <span className="text-[color:var(--color-atlas-warning)]">
               Embedding model &quot;{status.embedding_model}&quot; is not installed.
             </span>
           )}
@@ -36,26 +38,21 @@ export default function AiStatusBanner() {
             <>, {status.files_pending.toLocaleString()} pending</>
           )}
           {status.chat_model === null && (
-            <span className="block text-amber-400 mt-1">
+            <span className="block text-[color:var(--color-atlas-warning)] mt-1">
               No chat model configured, so natural-language translation will fall back to plain
               free-text search.
             </span>
           )}
         </div>
         {status.embedding_model_installed && status.files_pending > 0 && (
-          <button
-            type="button"
-            onClick={() => void buildSearchIndex()}
-            disabled={building}
-            className="shrink-0 rounded-lg border border-[color:var(--color-atlas-border)] px-3 py-1.5 text-xs text-[color:var(--color-atlas-fg)] hover:border-[color:var(--color-atlas-accent)] disabled:opacity-40 transition-colors"
-          >
+          <Button size="sm" onClick={() => void buildSearchIndex()} disabled={building}>
             {building ? "Building..." : "Build search index"}
-          </button>
+          </Button>
         )}
       </div>
       {building && embedProgress && (
         <div className="mt-3">
-          <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-[color:var(--color-atlas-border)] overflow-hidden">
             <div
               className="h-full bg-[color:var(--color-atlas-accent)] transition-all"
               style={{
@@ -81,6 +78,6 @@ export default function AiStatusBanner() {
           </div>
         </div>
       )}
-    </div>
+    </Panel>
   );
 }

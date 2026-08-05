@@ -1,6 +1,7 @@
 import { formatBytes, formatRelativeAge } from "../lib/format";
 import { keepPathFor } from "../store/duplicatesStore";
 import type { DuplicateGroup } from "../types";
+import Panel from "./ui/Panel";
 
 interface Props {
   group: DuplicateGroup;
@@ -12,7 +13,7 @@ export default function DuplicateGroupCard({ group, keepOverride, onChangeKeep }
   const keepPath = keepPathFor(group, keepOverride ? { [group.hash]: keepOverride } : {});
 
   return (
-    <div className="rounded-lg border border-[color:var(--color-atlas-border)] p-4">
+    <Panel className="p-4">
       <div className="flex items-baseline justify-between mb-3">
         <p className="text-sm">
           {group.members.length} copies of {formatBytes(group.size_bytes)}
@@ -58,6 +59,6 @@ export default function DuplicateGroupCard({ group, keepOverride, onChangeKeep }
           );
         })}
       </ul>
-    </div>
+    </Panel>
   );
 }

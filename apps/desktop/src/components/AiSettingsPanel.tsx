@@ -3,6 +3,9 @@ import { useState } from "react";
 import { getAiStatus, setAiSettings } from "../lib/atlas";
 import { useAiStore } from "../store/aiStore";
 import type { AiSettings } from "../types";
+import Button from "./ui/Button";
+import Input from "./ui/Input";
+import Panel from "./ui/Panel";
 
 export default function AiSettingsPanel() {
   const settings = useAiStore((s) => s.settings);
@@ -45,7 +48,7 @@ export default function AiSettingsPanel() {
         <select
           value={settings.chat_model ?? ""}
           onChange={(e) => void save({ ...settings, chat_model: e.target.value || null })}
-          className="rounded-lg border border-[color:var(--color-atlas-border)] bg-transparent px-2 py-1 text-sm"
+          className="rounded-lg border border-[color:var(--color-atlas-border)] bg-transparent px-2 py-1 text-sm transition-colors focus:outline-none focus:border-[color:var(--color-atlas-accent)]"
         >
           <option value="">None (free text only)</option>
           {chatModelOptions.map((m) => (
@@ -68,7 +71,7 @@ export default function AiSettingsPanel() {
           Cloud AI settings {settings.cloud_enabled ? "(enabled)" : "(off)"}
         </button>
       ) : (
-        <div className="rounded-lg border border-[color:var(--color-atlas-border)] p-4 mt-2">
+        <Panel className="p-4 mt-2">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium">Cloud AI</p>
             <button
@@ -96,41 +99,37 @@ export default function AiSettingsPanel() {
 
           {draft.cloud_enabled && (
             <div className="space-y-2">
-              <input
+              <Input
                 type="text"
                 placeholder="Base URL (e.g. https://api.openai.com/v1)"
                 value={draft.cloud_base_url ?? ""}
                 onChange={(e) => update({ cloud_base_url: e.target.value })}
-                className="w-full rounded-lg border border-[color:var(--color-atlas-border)] bg-transparent px-3 py-1.5 text-sm placeholder:text-[color:var(--color-atlas-muted)]"
+                className="w-full"
               />
-              <input
+              <Input
                 type="text"
                 placeholder="Model (e.g. gpt-4o-mini)"
                 value={draft.cloud_model ?? ""}
                 onChange={(e) => update({ cloud_model: e.target.value })}
-                className="w-full rounded-lg border border-[color:var(--color-atlas-border)] bg-transparent px-3 py-1.5 text-sm placeholder:text-[color:var(--color-atlas-muted)]"
+                className="w-full"
               />
-              <input
+              <Input
                 type="password"
                 placeholder="API key"
                 value={draft.cloud_api_key ?? ""}
                 onChange={(e) => update({ cloud_api_key: e.target.value })}
-                className="w-full rounded-lg border border-[color:var(--color-atlas-border)] bg-transparent px-3 py-1.5 text-sm placeholder:text-[color:var(--color-atlas-muted)]"
+                className="w-full"
               />
             </div>
           )}
 
           <div className="flex items-center gap-3 mt-3">
-            <button
-              type="button"
-              onClick={() => void save(draft)}
-              className="rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] text-sm font-medium px-3 py-1.5"
-            >
+            <Button variant="primary" size="sm" onClick={() => void save(draft)}>
               Save
-            </button>
+            </Button>
             {saved && <span className="text-xs text-[color:var(--color-atlas-muted)]">Saved.</span>}
           </div>
-        </div>
+        </Panel>
       )}
     </div>
   );

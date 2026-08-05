@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getDefaultRoots, startScan } from "../lib/atlas";
 import { useScanStore } from "../store/scanStore";
 import type { SuggestedRoot } from "../types";
+import Button from "./ui/Button";
 
 export default function OnboardingWizard() {
   const [suggested, setSuggested] = useState<SuggestedRoot[]>([]);
@@ -82,24 +83,33 @@ export default function OnboardingWizard() {
           </p>
         ) : (
           <ul className="space-y-2 mb-4">
-            {allRoots.map((root) => (
-              <li key={root.path}>
-                <label className="flex items-center gap-3 rounded-lg border border-[color:var(--color-atlas-border)] px-4 py-3 cursor-pointer hover:border-[color:var(--color-atlas-accent)] transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(root.path)}
-                    onChange={() => toggle(root.path)}
-                    className="accent-[color:var(--color-atlas-accent)]"
-                  />
-                  <span className="flex-1 min-w-0">
-                    <span className="block font-medium">{root.label}</span>
-                    <span className="block text-xs text-[color:var(--color-atlas-muted)] truncate">
-                      {root.path}
+            {allRoots.map((root) => {
+              const isSelected = selected.has(root.path);
+              return (
+                <li key={root.path}>
+                  <label
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
+                      isSelected
+                        ? "border-[color:var(--color-atlas-accent)]/40 bg-[color:var(--color-atlas-accent)]/8"
+                        : "border-[color:var(--color-atlas-border)] bg-[color:var(--color-atlas-surface)] hover:border-[color:var(--color-atlas-accent)]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggle(root.path)}
+                      className="accent-[color:var(--color-atlas-accent)]"
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block font-medium">{root.label}</span>
+                      <span className="block text-xs text-[color:var(--color-atlas-muted)] truncate">
+                        {root.path}
+                      </span>
                     </span>
-                  </span>
-                </label>
-              </li>
-            ))}
+                  </label>
+                </li>
+              );
+            })}
           </ul>
         )}
 
@@ -111,16 +121,16 @@ export default function OnboardingWizard() {
           + Add a custom folder
         </button>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={() => void handleStart()}
           disabled={selected.size === 0 || starting}
-          className="w-full rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] font-medium px-4 py-3 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+          className="w-full py-3"
         >
           {starting
             ? "Starting..."
             : `Scan ${selected.size} folder${selected.size === 1 ? "" : "s"}`}
-        </button>
+        </Button>
       </div>
     </main>
   );

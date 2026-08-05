@@ -13,6 +13,15 @@ import AiStatusBanner from "./AiStatusBanner";
 import CloudConfirmDialog from "./CloudConfirmDialog";
 import SearchResultsList from "./SearchResultsList";
 import SemanticResultsList from "./SemanticResultsList";
+import Button from "./ui/Button";
+import Input from "./ui/Input";
+import PageHeader from "./ui/PageHeader";
+import SegmentedControl from "./ui/SegmentedControl";
+
+const MODES = [
+  { key: "translate", label: "Ask in plain English" },
+  { key: "semantic", label: "Semantic search" },
+] as const;
 
 export default function AiSearchView() {
   const settings = useAiStore((s) => s.settings);
@@ -94,37 +103,24 @@ export default function AiSearchView() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-4xl mx-auto">
-      <p className="text-xs uppercase tracking-widest text-[color:var(--color-atlas-muted)] mb-2">
-        AI Search
-      </p>
-      <h1 className="text-2xl font-semibold mb-1">Search in plain English</h1>
-      <p className="text-sm text-[color:var(--color-atlas-muted)] mb-6">
-        Runs against a local model by default. Nothing leaves this machine unless you turn on cloud
-        AI and confirm it for a specific request.
-      </p>
+      <PageHeader
+        eyebrow="AI Search"
+        title="Search in plain English"
+        subtitle="Runs against a local model by default. Nothing leaves this machine unless you turn on cloud AI and confirm it for a specific request."
+      />
 
       <AiStatusBanner />
       <AiSettingsPanel />
 
-      <div className="flex items-center gap-1 rounded-lg border border-[color:var(--color-atlas-border)] p-1 mb-4 w-fit">
-        {(["translate", "semantic"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-              mode === m
-                ? "bg-white/10 text-[color:var(--color-atlas-fg)]"
-                : "text-[color:var(--color-atlas-muted)] hover:text-[color:var(--color-atlas-fg)]"
-            }`}
-          >
-            {m === "translate" ? "Ask in plain English" : "Semantic search"}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={MODES}
+        activeKey={mode}
+        onSelect={(key) => setMode(key as typeof mode)}
+        className="mb-4 w-fit"
+      />
 
       <div className="flex gap-2 mb-2">
-        <input
+        <Input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -134,19 +130,19 @@ export default function AiSearchView() {
               ? "e.g. large pdfs from last year"
               : "e.g. tax documents, vacation photos"
           }
-          className="flex-1 rounded-lg border border-[color:var(--color-atlas-border)] bg-transparent px-4 py-3 text-sm placeholder:text-[color:var(--color-atlas-muted)] focus:outline-none focus:border-[color:var(--color-atlas-accent)]"
+          className="flex-1 py-3"
         />
-        <button
-          type="button"
+        <Button
+          variant="primary"
           onClick={handleRun}
           disabled={loading || !query.trim()}
-          className="shrink-0 rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] text-sm font-medium px-4 py-3 disabled:opacity-40"
+          className="shrink-0 py-3"
         >
           {loading ? "Working..." : "Search"}
-        </button>
+        </Button>
       </div>
 
-      {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+      {error && <p className="text-sm text-[color:var(--color-atlas-danger)] mb-4">{error}</p>}
 
       {mode === "translate" && translatedQueryText !== null && (
         <p className="text-xs text-[color:var(--color-atlas-muted)] mb-4">

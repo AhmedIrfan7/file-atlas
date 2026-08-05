@@ -1,10 +1,12 @@
+import SegmentedControl from "./ui/SegmentedControl";
+
 const CATEGORIES = ["Image", "Video", "Audio", "Document", "Archive", "Installer", "Code", "Other"];
 
-const TIME_WINDOWS: { label: string; days: number | null }[] = [
-  { label: "All time", days: null },
-  { label: "Last 7 days", days: 7 },
-  { label: "Last 30 days", days: 30 },
-  { label: "Last year", days: 365 },
+const TIME_WINDOWS: { key: string; label: string; days: number | null }[] = [
+  { key: "all", label: "All time", days: null },
+  { key: "7d", label: "Last 7 days", days: 7 },
+  { key: "30d", label: "Last 30 days", days: 30 },
+  { key: "1y", label: "Last year", days: 365 },
 ];
 
 interface Props {
@@ -36,22 +38,13 @@ export default function StorageFilters({
       </select>
 
       <span className="text-xs text-[color:var(--color-atlas-muted)]">Changed within:</span>
-      <div className="flex items-center gap-1 rounded-lg border border-[color:var(--color-atlas-border)] p-1">
-        {TIME_WINDOWS.map((tw) => (
-          <button
-            key={tw.label}
-            type="button"
-            onClick={() => onSinceDaysChange(tw.days)}
-            className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
-              sinceDays === tw.days
-                ? "bg-white/10 text-[color:var(--color-atlas-fg)]"
-                : "text-[color:var(--color-atlas-muted)] hover:text-[color:var(--color-atlas-fg)]"
-            }`}
-          >
-            {tw.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        options={TIME_WINDOWS}
+        activeKey={TIME_WINDOWS.find((tw) => tw.days === sinceDays)?.key ?? "all"}
+        onSelect={(key) =>
+          onSinceDaysChange(TIME_WINDOWS.find((tw) => tw.key === key)?.days ?? null)
+        }
+      />
     </div>
   );
 }

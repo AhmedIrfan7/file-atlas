@@ -5,6 +5,10 @@ import { useSearchStore } from "../store/searchStore";
 import SavedSearchesPanel from "./SavedSearchesPanel";
 import SearchBar from "./SearchBar";
 import SearchResultsList from "./SearchResultsList";
+import Button from "./ui/Button";
+import Input from "./ui/Input";
+import PageHeader from "./ui/PageHeader";
+import Panel from "./ui/Panel";
 
 const RESULT_LIMIT = 100;
 const DEBOUNCE_MS = 250;
@@ -92,10 +96,7 @@ export default function SearchView() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
-      <p className="text-xs uppercase tracking-widest text-[color:var(--color-atlas-muted)] mb-2">
-        Search
-      </p>
-      <h1 className="text-2xl font-semibold mb-6">Find anything you have indexed</h1>
+      <PageHeader eyebrow="Search" title="Find anything you have indexed" />
 
       <SearchBar
         value={queryText}
@@ -106,32 +107,24 @@ export default function SearchView() {
 
       {savingName !== null && (
         <div className="mt-3 flex items-center gap-2">
-          <input
+          <Input
             type="text"
             autoFocus
             value={savingName}
             onChange={(e) => setSavingName(e.target.value)}
             placeholder="Name this search"
-            className="flex-1 rounded-lg border border-[color:var(--color-atlas-border)] bg-transparent px-3 py-2 text-sm focus:outline-none focus:border-[color:var(--color-atlas-accent)]"
+            className="flex-1"
           />
-          <button
-            type="button"
-            onClick={confirmSave}
-            className="rounded-lg bg-[color:var(--color-atlas-accent)] text-[#0b0d10] text-sm font-medium px-3 py-2"
-          >
+          <Button variant="primary" onClick={confirmSave}>
             Save
-          </button>
-          <button
-            type="button"
-            onClick={() => setSavingName(null)}
-            className="text-sm text-[color:var(--color-atlas-muted)] px-2"
-          >
+          </Button>
+          <Button variant="ghost" onClick={() => setSavingName(null)}>
             Cancel
-          </button>
+          </Button>
         </div>
       )}
 
-      {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-3 text-sm text-[color:var(--color-atlas-danger)]">{error}</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
         <section className="md:col-span-2">
@@ -141,7 +134,7 @@ export default function SearchView() {
             hasQuery={queryText.trim().length > 0}
           />
         </section>
-        <section>
+        <Panel className="p-4 h-fit">
           <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-3">
             Saved searches
           </h2>
@@ -150,7 +143,7 @@ export default function SearchView() {
             onRun={handleRunSaved}
             onDelete={handleDeleteSaved}
           />
-        </section>
+        </Panel>
       </div>
     </main>
   );

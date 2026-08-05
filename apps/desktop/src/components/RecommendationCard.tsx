@@ -1,10 +1,12 @@
 import { formatBytes, formatRelativeAge } from "../lib/format";
 import type { Confidence, Recommendation } from "../types";
+import Badge from "./ui/Badge";
+import Panel from "./ui/Panel";
 
-const CONFIDENCE_STYLE: Record<Confidence, string> = {
-  High: "text-[color:var(--color-atlas-accent)]",
-  Medium: "text-yellow-400",
-  Low: "text-[color:var(--color-atlas-muted)]",
+const CONFIDENCE_TONE: Record<Confidence, "accent" | "warning" | "neutral"> = {
+  High: "accent",
+  Medium: "warning",
+  Low: "neutral",
 };
 
 interface Props {
@@ -23,14 +25,12 @@ export default function RecommendationCard({
   const allSelected = recommendation.items.every((i) => selectedPaths.has(i.path));
 
   return (
-    <div className="rounded-lg border border-[color:var(--color-atlas-border)] p-4">
-      <div className="flex items-baseline justify-between mb-1">
+    <Panel className="p-4">
+      <div className="flex items-center justify-between gap-3 mb-1">
         <p className="text-sm font-medium">{recommendation.title}</p>
-        <span
-          className={`text-xs uppercase tracking-wide ${CONFIDENCE_STYLE[recommendation.confidence]}`}
-        >
+        <Badge tone={CONFIDENCE_TONE[recommendation.confidence]}>
           {recommendation.confidence} confidence
-        </span>
+        </Badge>
       </div>
       <p className="text-xs text-[color:var(--color-atlas-muted)] mb-3">
         {recommendation.explanation}
@@ -46,7 +46,7 @@ export default function RecommendationCard({
         {recommendation.items.map((item) => (
           <li
             key={item.path}
-            className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-white/5"
+            className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-[color:var(--color-atlas-surface-hover)]"
           >
             <input
               type="checkbox"
@@ -68,6 +68,6 @@ export default function RecommendationCard({
           </li>
         ))}
       </ul>
-    </div>
+    </Panel>
   );
 }

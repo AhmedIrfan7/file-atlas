@@ -11,6 +11,8 @@ import { useTransientMessage } from "../lib/useTransientMessage";
 import DeletePreviewBar from "./DeletePreviewBar";
 import RecentActionsPanel from "./RecentActionsPanel";
 import RecommendationCard from "./RecommendationCard";
+import PageHeader from "./ui/PageHeader";
+import Panel from "./ui/Panel";
 
 const RECENT_ACTIONS_LIMIT = 20;
 
@@ -77,13 +79,12 @@ export default function CleanupView() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto pb-24">
-      <p className="text-xs uppercase tracking-widest text-[color:var(--color-atlas-muted)] mb-2">
-        Cleanup
-      </p>
-      <h1 className="text-2xl font-semibold mb-6">Explainable suggestions, nothing automatic</h1>
+      <PageHeader eyebrow="Cleanup" title="Explainable suggestions, nothing automatic" />
 
-      {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
-      {successMessage && <p className="text-sm text-emerald-400 mb-4">{successMessage}</p>}
+      {error && <p className="text-sm text-[color:var(--color-atlas-danger)] mb-4">{error}</p>}
+      {successMessage && (
+        <p className="text-sm text-[color:var(--color-atlas-success)] mb-4">{successMessage}</p>
+      )}
 
       {loading && recommendations.length === 0 ? (
         <p className="text-sm text-[color:var(--color-atlas-muted)]">Looking for suggestions...</p>
@@ -110,12 +111,12 @@ export default function CleanupView() {
         </div>
       )}
 
-      <section className="mt-10">
+      <Panel className="mt-10 p-4">
         <h2 className="text-sm font-medium text-[color:var(--color-atlas-muted)] mb-3">
           Recently deleted
         </h2>
         <RecentActionsPanel actions={recentActions} onRestore={handleRestore} />
-      </section>
+      </Panel>
 
       <DeletePreviewBar
         pathCount={selectedPaths.size}

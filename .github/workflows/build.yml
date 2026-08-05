@@ -64,9 +64,12 @@ jobs:
       # demands the signing key, which only release.yml (tag pushes) has.
       # This is a compile/bundle check, not a publish, so skip updater
       # artifact signing here entirely rather than handing this workflow
-      # a copy of the signing key it has no reason to hold.
+      # a copy of the signing key it has no reason to hold. A config file
+      # is used instead of an inline --config JSON string because pwsh
+      # (the default shell on windows-latest) mangles embedded double
+      # quotes in a single-quoted argument differently than bash does.
       - name: Build Tauri bundle
-        run: pnpm --filter atlas-desktop tauri build --ci --config '{"bundle":{"createUpdaterArtifacts":false}}'
+        run: pnpm --filter atlas-desktop tauri build --ci --config src-tauri/tauri.ci.conf.json
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

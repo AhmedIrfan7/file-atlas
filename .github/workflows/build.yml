@@ -37,6 +37,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
@@ -68,8 +70,11 @@ jobs:
       # is used instead of an inline --config JSON string because pwsh
       # (the default shell on windows-latest) mangles embedded double
       # quotes in a single-quoted argument differently than bash does.
+      # macOS builds universal (arm64 + Intel) so this check catches a
+      # cross-compile break the same way release.yml would, not just on
+      # the tag push that actually ships.
       - name: Build Tauri bundle
-        run: pnpm --filter atlas-desktop tauri build --ci --config src-tauri/tauri.ci.conf.json
+        run: pnpm --filter atlas-desktop tauri build --ci --config src-tauri/tauri.ci.conf.json ${{ matrix.os == 'macos-latest' && '--target universal-apple-darwin' || '' }}
 
       # Cargo workspace root is the repo root, so target/ lives there too,
       # not under apps/desktop/src-tauri - the old path never matched
@@ -80,4 +85,5 @@ jobs:
           name: file-atlas-${{ matrix.os }}
           path: |
             target/release/bundle/**/*
+            target/universal-apple-darwin/release/bundle/**/*
           if-no-files-found: warn

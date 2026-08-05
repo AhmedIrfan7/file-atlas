@@ -34,6 +34,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
@@ -67,4 +69,4 @@ jobs:
           releaseBody: "See CHANGELOG.md and RELEASE_NOTES.md for what's in this release."
           releaseDraft: true
           prerelease: false
-          args: --ci
+          args: ${{ matrix.os == 'macos-latest' && '--ci --target universal-apple-darwin' || '--ci' }}
